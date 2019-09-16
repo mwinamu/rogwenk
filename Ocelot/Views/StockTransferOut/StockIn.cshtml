@@ -1,0 +1,468 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles{
+
+    <link href="~/Content/jquery-ui.min.css" rel="stylesheet" />
+    <link href="~/Content/select2.css" rel="stylesheet" />
+    <link href="~/Content/DataTables/css/jquery.dataTables.css" rel="stylesheet" />
+    <link href="~/Content/css/bootstrap-datepicker3.min.css" rel="stylesheet" />
+    <link href="~/Content/sweetalert/sweetalert.css" rel="stylesheet" />
+    <style>
+        .datepicker {
+            background-color: #ffffff;
+            color: grey;
+        }
+    </style>
+}
+@section Scripts{
+    <script src="~/Content/jquery-ui.js"></script>
+    <script src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script src="~/Content/js/plugins/datepicker/bootstrap-datepicker.min.js"></script>
+    <script src="~/Content/js/plugins/icheck/icheck.min.js"></script>
+    <script src="~/Content/js/plugins/inputmask/jquery.inputmask.bundle.min.js"></script>
+
+    <script src="~/Content/select2.js"></script>
+    <script src="~/Content/sweetalert/sweetalert.min.js"></script>
+    <script src="~/Scripts/Common.js"></script>
+    <script>
+        $('#EndDate').datepicker({
+            setDate: new Date(),
+            format: 'dd-MM-yyyy',
+            autoclose: true
+        }).datepicker("setDate", 'now');
+        $('#StartDate').datepicker({
+            setDate: new Date(),
+            format: 'dd-MM-yyyy',
+            autoclose: true
+        }).datepicker("setDate", 'now');
+        var stockTransferedOutArr = []; populateStockTransferedOut(); var emptySubArr = [];
+        populateVehicleDropDown(); populateBrandsDropDown(); populateContainerStockLevel();
+        var containerStockLevel = [];
+        var brands;
+        $('.select2').select2();
+        function populatePage() {
+            populateStockTransferedOut();
+            populateContainerStockLevel();
+        }
+        function getStockTransferedOut() {
+            var StartDate = $('#StartDate').val();
+            var EndDate = $('#EndDate').val();
+            $.ajax({
+                url: '/StockTransferOut/GetStock?type=' + 'OFFLOAD' + '&FromDate=' + StartDate + '&ToDate=' + EndDate + '',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    stockTransferedOutArr = res;
+                }
+            });
+            return stockTransferedOutArr;
+        }
+        function populateStockTransferedOut() {
+            $('#stockTransferedOutTable').DataTable({
+                data: getStockTransferedOut(),
+                "autoWidth": false,
+                "order": false,
+                destroy: true,
+                columns: [
+
+                    { title: "Vehicle Registration", data: "VSehicleReg" },
+                    { title: "Transferred 6KG", data: "Transferred6KG" },
+                    { title: "Transferred 13KG", data: "Transferred13KG" },
+                    { title: "Transferred 50KG", data: "Transferred50KG" },
+                    { title: "Transferred Stock Grill", data: "TransferredStockGrill" },
+                    { title: "Transferred Stock Burner", data: "TransferredStockBurner" },
+
+                    { title: "Date Transfered", data: "TransferredAt" },
+                    { title: "Transfered By", data: "TransferredBy" }
+
+                ]
+
+            });
+        }
+        $('#transferOut').on('click', function () {
+            $('#transferOutModal').modal('show');
+        });
+        $('#submitTransferOut').on('click', function () {
+            $('#submitTransferOut').attr("disabled", true);
+            if (validatingUsingClass("transferOutForm") === 0) {
+                var UnsoldObj = {
+                    "VehicleID": $("#vehicleDropDown option:selected").val(),
+                    "Transferred6KG": $('#transferred6KG').val(),
+                    "Transferred13KG": $('#transferred13KG').val(),
+                    "Transferred50KG": $('#transferred50KG').val(),
+                    "TransferredStockBurner": $('#TransferredStockBurner').val(),
+                    "TransferredStockGrill": $('#TransferredStockGrill').val()
+                };
+                var postObj = {
+                    "Unsold": UnsoldObj,
+                    "Empties": emptySubArr
+                }
+                var url = "/StockTransferOut/TransferStockIn";
+                customPost("Proceed to add stock", url, postObj, "transferOutModal",
+                    "transferOutForm", "TRANSFER STOCK", populatePage);
+
+            }
+            $('#submitTransferOut').attr("disabled", false);
+        });
+        var vehiclesArr = [];
+        function getVehicles() {
+            $.ajax({
+                url: '/Vehicle/GetUnloadingVehicleList',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    vehiclesArr = res;
+                }
+            });
+            return vehiclesArr;
+        }
+        function populateVehicleDropDown() {
+            var vehicelDropdownArr = [];
+            vehicelDropdownArr.push('<option value="">SELECT A VEHICLE</option>');
+            getVehicles().forEach(function (elem) {
+                vehicelDropdownArr.push('<option value=' + elem.ID + '>' + elem.VehicleRegistration + '</option>');
+            });
+            $('#vehicleDropDown').html(vehicelDropdownArr);
+        }
+        function populateBrandsDropDown() {
+            var vehicelDropdownArr = [];
+            vehicelDropdownArr.push('<option value="">SELECT A BRAND</option>');
+            getBrands().forEach(function (elem) {
+                vehicelDropdownArr.push('<option value=' + elem.BrandID + '>' + elem.BrandName + '</option>');
+            });
+            $('#cylinderBrands').html(vehicelDropdownArr);
+        }
+
+        function getBrands() {
+            $.ajax({
+                url: '/Brand/GetBrands',
+                async: false,
+                success: function (res) {
+                    brands = res;
+                }
+
+            });
+            return brands;
+        }
+
+        $('#addEmpties').on('click', function () {
+            if (validatingUsingClass("emptyReturnsForm") === 0) {
+                postObj = {
+                    "BrandID": $('#cylinderBrands option:selected').val(),
+                    "BrandName": $('#cylinderBrands option:selected').text(),
+                    "EmptyCylinders": $('#emptyCylindersSKU option:selected').text(),
+                    "EmptyCylindersSKU": $('#emptyCylindersSKU option:selected').val(),
+                    "EmptySkuQunatity": $('#emptySkuQunatity').val(),
+                    "id": makeid(),
+                };
+                emptySubArr.push(postObj);
+                populateEmptyAdded(emptySubArr);
+            }
+        });
+        function populateEmptyAdded() {
+            $('#emptiesTBL').DataTable({
+                destroy: true,
+                "autoWidth": false,
+                order: false,
+                paging: false,
+                ordering: false,
+                searching: false,
+                "bInfo": false,
+                data: emptySubArr,
+                columns: [
+                    { title: "Brand Name", data: "BrandName" },
+                    { title: "Empty Cylinders", data: "EmptyCylinders" },
+                    { title: "Qunatity", data: "EmptySkuQunatity" },
+                    {
+                        title: "Actions", data: null, render: function (data, type) {
+                            if (type === 'display') {
+                                return '<center><a class="btn btn-quickSWap " onclick="removeProd(\'' + data.id + '\')">REMOVE</a></center>';
+                            }
+                            return data;
+                        }
+                    }
+                ]
+            })
+        }
+        function removeProd(id) {
+            var n = jQuery.grep(emptySubArr, function (n, i) {
+                return n.id !== id;
+            });
+            emptySubArr.length = 0;
+            emptySubArr = n;
+            populateEmptyAdded();
+        }
+
+        function GetContainerStockLevel() {
+            var containerStockLevel = [];
+            $.ajax({
+                url: '/StockTransferOut/GetContainerStockLevel',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    containerStockLevel = res;
+                }
+            })
+            return containerStockLevel;
+        }
+        function populateContainerStockLevel() {
+            $('#stockLevelTable').DataTable({
+                destroy: true,
+                autoWidth: false,
+                data: GetContainerStockLevel(),
+                columns: [
+                    { title: "Shop Name", data: "ShopName" },
+                    { title: "Stock 6KG", data: "Stock6KG" },
+                    { title: "Stock 13KG", data: "Stock13KG" },
+                    { title: "Stock 50KG", data: "Stock50KG" },
+                    { title: "Stock Burner", data: "StockBurner" },
+                    { title: "Stock Grill", data: "StockGrill" }
+                ]
+            });
+        }
+        $('#filterByDate').on('click', function () {
+            populateStockTransferedOut();
+        });
+    </script>
+}
+<!-- Content Header (Page header) -->
+<section class="content-header">
+    <h1>
+        VEHICLE OFFLOADING
+        <small style="color:white"> offloads vehicles, lists offloading history</small>
+    </h1>
+</section>
+
+<!-- main section-->
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box">
+                <div class="box-header">
+                    <span>SHOP STOCK LEVEL</span>
+                </div>
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <table id="stockLevelTable" class="table table-bordered"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box">
+                <div class="box-header">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <form class="form-inline">
+                                <div class="form-group">
+                                    <label for="email">FROM:</label>
+                                    <input type="text" autocomplete="off" class="form-control" id="StartDate">
+                                </div>
+                                <div class="form-group">
+                                    <label for="pwd">TO:</label>
+                                    <input type="text" autocomplete="off" class="form-control" id="EndDate">
+                                </div>
+                                <div class="form-group">
+                                    <button type="button" id="filterByDate" class="btn btn-Ocelot">FILTER</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="pull-right">
+                                <a id="transferOut" class="btn btn-Ocelot">OFFLOADING</a>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-12 table-responsive">
+                            <table id="stockTransferedOutTable" class="table table-bordered table-responsive"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- transfer out modal -->
+    <div id="transferOutModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header btn-Ocelot">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">OFFLOADING</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="transferOutForm">
+                        <!-- unsold box-->
+                        <div class="box">
+                            <div class="box-header">
+                                <span>UNSOLD</span>
+                            </div>
+                            <div class="box-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <label>VEHICLE FROM:</label>
+                                                    </div>
+                                                    <div class="col-md-8">
+                                                        <select id="vehicleDropDown" class="select2 form-control validate-required" style="width:100%;"></select>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <label>RETURN 6KG:</label>
+                                                    </div>
+                                                    <div class="col-md-8">
+                                                        <input id="transferred6KG" value="0" onkeyup="validateNumber(this.id)" class="form-control validate-required" />
+                                                    </div>
+
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                        <br />
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <label>RETURN 13KG:</label>
+                                                    </div>
+                                                    <div class="col-md-8">
+                                                        <input id="transferred13KG" value="0" onkeyup="validateNumber(this.id)" class="form-control validate-required" />
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <label>RETURN 50KG:</label>
+                                                    </div>
+                                                    <div class="col-md-8">
+                                                        <input id="transferred50KG" value="0" onkeyup="validateNumber(this.id)" class="form-control validate-required" />
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        </div><br />
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <label>RETURN BURNER:</label>
+                                                    </div>
+                                                    <div class="col-md-8">
+                                                        <input id="TransferredStockBurner" value="0" onkeyup="validateNumber(this.id)" class="form-control validate-required" />
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <label>RETURN GRILL:</label>
+                                                    </div>
+                                                    <div class="col-md-8">
+                                                        <input id="TransferredStockGrill" value="0" onkeyup="validateNumber(this.id)" class="form-control validate-required" />
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><br />
+                        <!-- sold box -->
+                        <div class="box">
+                            <div class="box-header">
+                                <span>EMPTIES</span>
+                            </div>
+                            <div class="box-body">
+                                <div class="row" id="emptyReturnsForm">
+                                    <div class="col-md-12">
+
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <label>BRAND:</label>
+                                                    </div>
+                                                    <div class="col-md-9">
+                                                        <select class="form-control select2 " id="cylinderBrands" style="width:100%"></select>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <label>SKU:</label>
+                                                    </div>
+                                                    <div class="col-md-8">
+                                                        <select class="form-control select2 " id="emptyCylindersSKU">
+                                                            <option value="6KG">Cylinder 6KG</option>
+                                                            <option value="13KG">Cylinder 13KG</option>
+                                                            <option value="50KG">Cylinder 50KG</option>
+                                                        </select>
+                                                    </div>
+
+                                                </div>
+                                            </div> <div class="col-md-4">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <label>QUANTITY:</label>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <input id="emptySkuQunatity" type="number" class="form-control " onkeyup="validateNumber(this.id)" />
+                                                    </div>
+
+                                                </div>
+                                            </div> <div class="col-md-1">
+                                                <div class="row">
+                                                    <div class="col-md-12">
+                                                        <a class="btn btn-Ocelot pull-right" id="addEmpties">ADD</a>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="box-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <table id="emptiesTBL" class="table table-bordered"></table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <a id="submitTransferOut" class="btn btn-Ocelot">SUBMIT</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>

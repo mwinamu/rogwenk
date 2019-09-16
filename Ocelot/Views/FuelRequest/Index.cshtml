@@ -1,0 +1,321 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles{
+    <link href="~/Content/select2.css" rel="stylesheet" />
+    <link href="~/Content/DataTables/css/jquery.dataTables.css" rel="stylesheet" />
+    <link href="~/Content/css/bootstrap-datepicker3.min.css" rel="stylesheet" />
+    <link href="~/Content/sweetalert/sweetalert.css" rel="stylesheet" />
+}
+@section Scripts{
+    <!-- Select2 -->
+    <script src="~/bower_components/select2/dist/js/select2.full.min.js"></script>
+    <script src="~/bower_components/bootstrap-daterangepicker/daterangepicker.js"></script>
+    <!-- datepicker -->
+    <script src="~/bower_components/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
+    <!-- DataTables -->
+    <script src="~/bower_components/datatables.net/js/jquery.dataTables.min.js"></script>
+
+    <script src="~/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
+    <script src="~/js/Common.js"></script>
+
+    <script>
+        var fuelRequestsArr = []; var approverRequest = []; var declinedRequests = [];
+        $('.select2').select2
+        populateRequests();
+        function populateRequests() {
+            populateApprovedFuelRequests();
+            populateFuelRequests();
+            populateDeclineFuelRequests();
+            populateClosedFuelRequests();
+        }
+        function getFuelRequests() {
+            $.ajax({
+                url: '/FuelRequest/GetFuelRequests?Status=0',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    fuelRequestsArr = res;
+                }
+            });
+            return fuelRequestsArr;
+        }
+        function getApprovedFuelRequests() {
+            $.ajax({
+                url: '/FuelRequest/GetFuelRequests?Status=1',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    approverRequest = res;
+                }
+            });
+            return approverRequest;
+        }
+        function getClosedFuelRequests() {
+            $.ajax({
+                url: '/FuelRequest/GetFuelRequests?Status=3',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    approverRequest = res;
+                }
+            });
+            return approverRequest;
+        }
+        function getDeclinedFuelRequests() {
+            $.ajax({
+                url: '/FuelRequest/GetFuelRequests?Status=2',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    declinedRequests = res;
+                }
+            });
+            return declinedRequests;
+        }
+        function populateFuelRequests() {
+            $('#fuelRequestTable').DataTable({
+                data: getFuelRequests(),
+                destroy: true,
+                "autoWidth": false,
+                order: false,
+                columns: [
+                    {
+                        title: "Actions", data: null, render: function (data, type) {
+                            if (type === 'display') {
+                                return '<center><div class="dropdown">'
+                                    + '<a  style="width:80%;" class="fa fa-list btn btn-quickSWap dropdown-toggle" data-toggle="dropdown" ">'
+                                    + '<span class="caret"></span></a>'
+                                    + '<ul class="dropdown-menu">'
+                                    + '<li><a onclick="approveFuelRequest(\'' + data.ID + '\')">APPROVE</a></li>'
+                                    + '<li><a onclick="declineFuelRequest(\'' + data.ID + '\')">DECLINE</a></li>'
+                                    + '</ul>'
+                                    + '</div></center>';
+                            }
+                            return data;
+                        },
+                        className: "dt-body-center"
+                    },
+                    { title: "DriverName", data: "DriverName" },
+                    { title: "Request Quantity", data: "VRegNO" },
+                    { title: "Vehicle Registration", data: "VRegNO" },
+                    { title: "Fueling Station", data: "FuelingStation" },
+                    { title: "Fueling Quantity", data: "FuelingQuantity" },
+                    { title: "Station", data: "FuelingStation" },
+                    { title: "Mileage", data: "RequestMileage" }
+
+                ]
+            });
+        }
+        function populateApprovedFuelRequests() {
+            $('#fuelApproveRequestTable').DataTable({
+                data: getApprovedFuelRequests(),
+                destroy: true,
+                "autoWidth": false,
+                order: false,
+                columns: [
+                    { title: "DriverName", data: "DriverName" },
+                    { title: "Request Quantity", data: "VRegNO" },
+                    { title: "Vehicle Registration", data: "VRegNO" },
+                    { title: "Fueling Station", data: "FuelingStation" },
+                    { title: "Fueling Quantity", data: "FuelingQuantity" },
+                    { title: "Station", data: "FuelingStation" },
+                    { title: "Mileage", data: "RequestMileage" }
+
+                ]
+            });
+        }
+        function populateDeclineFuelRequests() {
+            $('#fuelDeclineRequestTable').DataTable({
+                data: getDeclinedFuelRequests(),
+                destroy: true,
+                "autoWidth": false,
+                order: false,
+                columns: [
+
+                    { title: "DriverName", data: "DriverName" },
+                    { title: "Request Quantity", data: "VRegNO" },
+                    { title: "Vehicle Registration", data: "VRegNO" },
+                    { title: "Fueling Station", data: "FuelingStation" },
+                    { title: "Fueling Quantity", data: "FuelingQuantity" },
+                    { title: "Station", data: "FuelingStation" },
+                    { title: "Mileage", data: "RequestMileage" }
+                ]
+            });
+        }
+        function populateClosedFuelRequests() {
+            $('#fuelClosedRequestTable').DataTable({
+                data: getClosedFuelRequests(),
+                destroy: true,
+                "autoWidth": false,
+                order: false,
+                columns: [
+
+
+                    { title: "DriverName", data: "DriverName" },
+                    { title: "Request Quantity", data: "VRegNO" },
+                    { title: "Vehicle Registration", data: "VRegNO" },
+                    { title: "Fueling Station", data: "FuelingStation" },
+                    { title: "Fueling Quantity", data: "FuelingQuantity" },
+                    { title: "Station", data: "FuelingStation" },
+                    { title: "Mileage", data: "RequestMileage" }
+
+                ]
+            });
+        }
+        function approveFuelRequest(id) {
+            var driverName;
+            jQuery.grep(fuelRequestsArr, function (elem) {
+                if (parseInt(elem.ID) === parseInt(id)) {
+                    driverName = elem.DriverName;
+                }
+            });
+            swal({
+                title: "APPROVE  FUEL REQUEST",
+                type: "input",
+                showCancelButton: true,
+                closeOnConfirm: false,
+                inputPlaceholder: " Approved quantity for " + driverName + "'s fuel request"
+            }, function (inputValue) {
+                if (inputValue === false) return false;
+                if (inputValue === "") {
+                    swal.showInputError("You need to write something!");
+                    return false
+                }
+                var postObj = { "ID": id, "reason": inputValue };
+                var url = '/FuelRequest/ApproveFuelRequest'
+                $.ajax({
+                    url: url,
+                    data: JSON.stringify(postObj),
+                    contentType: "application/json;charst=utf-8",
+                    dataType: 'JSON',
+                    type: 'POST',
+                    success: function (res) {
+                        if (res.Status === "success") {
+                            swal("SUCCESS!", "Approved successfully", "success");
+                            populateRequests();
+                        } else {
+                            swal("INFO!", "Approving failed", "info");
+                        }
+                    }
+                })
+
+            });
+        }
+
+        function declineFuelRequest(id) {
+            var driverName;
+            jQuery.grep(fuelRequestsArr, function (elem) {
+                if (parseInt(elem.ID) === parseInt(id)) {
+                    driverName = elem.DriverName;
+                }
+            });
+            swal({
+                title: "DECLINE  FUEL REQUEST",
+                type: "input",
+                showCancelButton: true,
+                closeOnConfirm: false,
+                inputPlaceholder: "Reason for declining " + driverName + " fuel request"
+            }, function (inputValue) {
+                if (inputValue === false) return false;
+                if (inputValue === "") {
+                    swal.showInputError("You need to write something!");
+                    return false
+                }
+                var postObj = { "ID": id, "reason": inputValue };
+                var url = '/FuelRequest/DeclineFuelRequest'
+                $.ajax({
+                    url: url,
+                    data: JSON.stringify(postObj),
+                    contentType: "application/json;charst=utf-8",
+                    dataType: 'JSON',
+                    type: 'POST',
+                    success: function (res) {
+                        if (res.Status === "success") {
+                            swal("SUCCESS!", "Declined successfully", "success");
+                            populateRequests();
+                        } else {
+                            swal("INFO!", "Declined failed", "info");
+                        }
+                    }
+                })
+
+            });
+        }
+    </script>
+}
+
+<section class="content-header">
+    <h1>
+        Fuel Requests
+        <small style="color:white"> approves, declines and lists fuel requests</small>
+    </h1>
+</section>
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box">
+                <div class="box-header">
+
+                </div>
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <!-- Custom Tabs -->
+                            <div class="nav-tabs-custom">
+                                <ul class="nav nav-tabs">
+                                    <li class="active"><a href="#tab_1" data-toggle="tab">PENDING</a></li>
+                                    <li><a href="#tab_2" data-toggle="tab">APPROVED</a></li>
+                                    <li><a href="#tab_3" data-toggle="tab">DECLINED</a></li>
+                                    <li><a href="#tab_4" data-toggle="tab">CLOSED</a></li>
+                                    <li class="pull-right"><a href="#" class="text-muted"><i class="fa fa-gear"></i></a></li>
+                                </ul>
+                                <div class="tab-content">
+                                    <div class="tab-pane active" id="tab_1">
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <table id="fuelRequestTable" class="table table-bordered"></table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- /.tab-pane -->
+                                    <div class="tab-pane" id="tab_2">
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <table id="fuelApproveRequestTable" class="table table-bordered"></table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- /.tab-pane -->
+                                    <div class="tab-pane" id="tab_3">
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <table id="fuelDeclineRequestTable" class="table table-bordered"></table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane" id="tab_4">
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <table id="fuelClosedRequestTable" class="table table-bordered"></table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- /.tab-pane -->
+                                </div>
+                                <!-- /.tab-content -->
+                            </div>
+                            <!-- nav-tabs-custom -->
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+

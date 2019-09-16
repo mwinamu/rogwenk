@@ -1,0 +1,197 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles{
+
+    <link href="~/Content/jquery-ui.min.css" rel="stylesheet" />
+    <link href="~/Content/select2.css" rel="stylesheet" />
+    <link href="~/Content/DataTables/css/jquery.dataTables.css" rel="stylesheet" />
+    <link href="~/Content/css/bootstrap-datepicker3.min.css" rel="stylesheet" />
+    <link href="~/Content/sweetalert/sweetalert.css" rel="stylesheet" />
+    <style>
+        .datepicker {
+            background-color: #ffffff;
+            color: grey;
+        }
+    </style>
+}
+@section Scripts{
+    <script src="~/Content/jquery-ui.js"></script>
+    <script src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script src="~/Content/js/plugins/datepicker/bootstrap-datepicker.min.js"></script>
+    <script src="~/Content/js/plugins/icheck/icheck.min.js"></script>
+    <script src="~/Content/js/plugins/inputmask/jquery.inputmask.bundle.min.js"></script>
+
+    <script src="~/Content/select2.js"></script>
+    <script src="~/Content/sweetalert/sweetalert.min.js"></script>
+    <script src="~/Scripts/Common.js"></script>
+    <script>
+        $('.select2').select2(); var zones = [];
+
+        populatePrices();
+        function GetPrices() {
+            var prices;
+            $.ajax({
+                url: '/Price/GetPrices',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    prices = res;
+                }
+            });
+            return prices;
+        }
+        function populatePrices() {
+            $('#priceTable').DataTable({
+                "autoWidth": false,
+                "order": false,
+                destroy: true,
+                data: GetPrices(),
+                columns: [
+                    { title: "ProductName", data: "ProductName" },
+                    { title: "Price", data: "Price" },
+                    { title: "Zone Name", data: "ZoneName" },
+                    { title: "DateAdded", data: "DateAdded" }
+
+                ]
+            });
+        }
+        $('#addPrice').on('click', function () {
+            $('#addPriceModal').modal('show');
+        });
+        function GetProducts() {
+            var products = [];
+            $.ajax({
+                url: '/Product/ProductDropDown',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    products = res;
+                }
+            });
+            return products;
+        }
+        populateProductDropDown(); //populateZonesDropDown();
+        function populateProductDropDown() {
+            var pricesdropdownarr = [];
+            pricesdropdownarr.push('<option value="">SELECT A PRODUCT</option>');
+            //console.log(GetProducts());
+            GetProducts().forEach(function (elem) {
+                pricesdropdownarr.push('<option value=' + elem.ID + '>' + elem.Name + '</option>');
+            });
+            $('#products').html(pricesdropdownarr);
+
+        }
+        $('#submitAddPrice').on('click', function () {
+            if (validatingUsingClass("addPriceForm") === 0) {
+                url = '/Price/AddPrice';
+                var postObj = {
+                    "ProductID": $('#products option:selected').val(),
+                    "Price": $('#price').val()
+                   // "ZoneID": $('#zones option:selected').val()
+                };
+                var price = {"price":postObj};
+                customPost("Proceed to add price", url, price, "addPriceModal", "addPriceForm", "ADD PRICE", populatePrices);
+            }
+        });
+        function GetZones() {
+            $.ajax({
+                url: '/Zone/GetZones',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    zones = res;
+                }
+            });
+            return zones;
+        }
+        //function populateZonesDropDown() {
+        //    var zonesDropDown = [];
+        //    zonesDropDown.push('<option value="">SELECT A ZONE</option>');
+        //    GetZones().forEach(function (elem) {
+        //        zonesDropDown.push('<option value=' + elem.Id + '>' + elem.Name + '</option>');
+        //    });
+        //    $('#zones').html(zonesDropDown);
+        //}
+    </script>
+}
+<!-- Content Header (Page header) -->
+<section class="content-header">
+    <h1>
+        Prices
+        <small style="color:white"> adds and lists prices</small>
+    </h1>
+</section>
+
+<!-- main section-->
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box">
+                <div class="box-header with-border">
+                    <a id="addPrice" class="btn btn-Ocelot pull-right">ADD</a>
+                </div>
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <table id="priceTable" class="table table-bordered"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- add price modal -->
+    <div id="addPriceModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header btn-Ocelot">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">ADD PRICE</h4>
+                </div>
+                <div class="modal-body ">
+                    <form id="addPriceForm">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <label>PRODUCT:</label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <select id="products" class="form-control select2 validate-required" style="width:100%;"></select>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div><br />
+                        <div class="row">
+                           
+                            <div class="col-md-12">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <label>PRICE</label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <input id="price" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <a id="submitAddPrice" class="btn btn-Ocelot">SAVE</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+

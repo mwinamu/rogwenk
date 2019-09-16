@@ -1,0 +1,294 @@
+﻿
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles{
+
+
+    <link href="~/Content/select2.css" rel="stylesheet" />
+    <link href="~/Content/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Content/DataTables/css/jquery.dataTables.css" rel="stylesheet" />
+    <link href="~/Content/css/bootstrap-datepicker3.min.css" rel="stylesheet" />
+    <link href="~/Content/sweetalert/sweetalert.css" rel="stylesheet" />
+    <script src="~/Content/js/plugins/datepicker/bootstrap-datepicker.min.js"></script>
+    <script src="~/Scripts/Common.js"></script>
+    <style>
+        .btn-Ocelot {
+            background-color: #d92b57;
+            color: white
+        }
+    </style>
+}
+@section Scripts{
+    <script src="~/Content/js/plugins/jquery/jquery-3.3.1.min.js"></script>
+    <script src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script src="~/Content/js/plugins/bootstrap/bootstrap.min.js"></script>
+    <script src="~/Content/select2.js"></script>
+    <script src="~/Content/sweetalert/sweetalert.min.js"></script>
+    <script>
+        //staffTable
+        var staffs = []; populateStaffs();
+        $('.select2').select2();
+        function getStaffs() {
+            $.ajax({
+                url: '/Staff/GetStaffs',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    staffs = res;
+                }
+            });
+            return staffs;
+        }
+        function populateStaffs() {
+            $('#staffTable').DataTable({
+                destroy: true,
+                order: false,
+                "autoWidth": false,
+                data: getStaffs(),
+                columns: [
+                    {
+                        title: "Actions", data: null, render: function (data, type) {
+                            if (type === 'display') {
+                                return '<center><div class="dropdown">'
+                                    + '<a  style="width:80%;" class="fa fa-list btn btn-Ocelot dropdown-toggle" data-toggle="dropdown" ">'
+                                    + '<span class="caret"></span></a>'
+                                    + '<ul class="dropdown-menu">'
+                                    + '<li><a onclick="phoneNumber(\'' + data.UserID + '\')">ADD PHONE NUMBER</a></li>'
+                                    + '</ul>'
+                                    + '</div></center>';
+                            }
+                            return data;
+                        },
+                    },
+                    { title: "Staff Name", data: "StaffName" },
+                    { title: "Payroll Number", data: "PayrollNumber" },
+                    { title: "Phone Number", data: "PhoneNumber" },
+                    { title: "User Type", data: "UserType" }
+                ]
+
+            });
+        }
+        $('#addStaff').on('click', function () {
+            populateDepartmentsDropDown();
+            $('#addStaffModal').modal('show');
+        });
+        $('#submitStaff').on('click', function () {
+            if (validatingUsingClass("staffForm") === 0) {
+                url = '/Staff/AddStaff';
+                var postObj = {
+                    "FirstName": $('#firstName').val(),
+                    "MiddleName": $('#middleName').val(),
+                    "LastName": $('#lastName').val(),
+                    "PhoneNumber": $('#phoneNumber').val(),
+                    "PayrollNumber": $('#employeeNumber').val(),
+                    "DepartmentID": $('#department option:selected').val()
+                };
+                customPost("Proceed and and staff", url, postObj, "addStaffModal", "staffForm", "ADD STAFF", populateStaffs);
+            }
+        });
+        var departments = [];
+        function GetDepartments() {
+            $.ajax({
+                url: '/Department/GetDepartments',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    departments = res;
+                }
+            });
+            return departments;
+        }
+        function populateDepartmentsDropDown() {
+            var departmentArr = [];
+            departmentArr.push('<option>Select a department</option>');
+            GetDepartments().forEach(function (elem) {
+                departmentArr.push('<option value=' + elem.Id + '>' + elem.Department + '</option>');
+            });
+            $('#department').html(departmentArr);
+        }
+        function phoneNumber(id) {
+            swal({
+                title: "ADD PHONE NUMBER!",
+                text: "type to add phone number :",
+                type: "input",
+                showCancelButton: true,
+                closeOnConfirm: false,
+                inputPlaceholder: "Provide staff phone number"
+            }, function (inputValue) {
+                if (inputValue === false) return false;
+                if (inputValue.length < 10 || inputValue.length > 10) {
+                    swal.showInputError("Kindly add phone number 07*********");
+                    return false
+                } else {
+                    var postObj = { "ID": id, "PhoneNumber": inputValue };
+                    $.ajax({
+                        url: '/Staff/Phonenumber',
+                        data: JSON.stringify(postObj),
+                        contentType: "application/json;charst=utf-8",
+                        dataType: 'JSON',
+                        type: 'POST',
+                        success: function (res) {
+                            swal("STAFF", res.message, res.status);
+                        }
+                    });
+                    populateStaffs();
+
+                }
+            });
+        }
+    </script>
+
+
+}
+<section class="content-header">
+    <h4>
+        STAFF
+        <small style="color:white"> adds and edits staffs</small>
+    </h4>
+</section>
+
+<section class="content">
+    <div class="box">
+        <div class="box-header">
+            <div class="row">
+                <div class="col-md-10">
+
+                </div>
+                <div class="col-md-2">
+                    <a class="btn btn-Ocelot pull-right" id="addStaff">ADD STAFF </a>
+                </div>
+            </div>
+        </div>
+        <div class="box-body">
+            <div class="row">
+                <div class="col-md-12">
+                    <table id="staffTable" class="table table-bordered"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div id="addStaffModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header btn-Ocelot">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <label style="color:white">ADD STAFF</label>
+                </div>
+                <div class="modal-body">
+                    <form id="staffForm">
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <label>DEPARTMENT:</label>
+                                </div>
+                                
+                                <div class="col-md-10">
+                                    <div class="input-group date">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-sort-desc"></i>
+                                        </div>
+                                        <select id="department" class="select2 form-control validate-required" style="width:100%"></select>
+                                    </div>
+                                </div>
+                                </div><br />
+                            </div>
+                        <div class="form-group">
+
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <label>FIRST NAME:</label>
+                                </div>
+                                <div class="col-md-10">
+                                    <div class="input-group date">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-user-plus"></i>
+                                        </div>
+                                        <input id="firstName" class="form-control validate-required" />
+                                        </div>
+                                    </div>
+                                </div><br />
+                        </div>
+                        <div class="form-group">
+
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <label>MIDDLE NAME:</label>
+                                </div>
+                                <div class="col-md-10">
+                                    <div class="input-group date">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-user-plus"></i>
+                                        </div>
+                                        <input id="middleName" class="form-control validate-required" />
+                                    </div>
+                                        
+                                    </div>
+                                </div><br />
+                        </div>
+                        <div class="form-group">
+
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <label>LAST NAME:</label>
+                                </div>
+                                <div class="col-md-10">
+                                    <div class="input-group date">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-user-plus"></i>
+                                        </div>
+
+                                        <input id="lastName" class="form-control validate-required" />
+                                    </div>
+                                    </div>
+                                </div><br />
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <label>EMPLOYEE NUMBER</label>
+                                </div>
+                                <div class="col-md-10">
+                                    <div class="input-group date">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-address-card-o"></i>
+                                        </div>
+                                        <input id="employeeNumber" class="form-control validate-required" />
+                                    </div>
+                                        
+                                    </div>
+                                </div>
+                            <br />
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <label>PHONE NUMBER</label>
+                                </div>
+                                <div class="col-md-10">
+                                    <div class="input-group date">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-phone"></i>
+                                        </div>
+                                        <input id="phoneNumber" class="form-control validate-required" />
+                                    </div>
+                                        
+                                    </div>
+                                </div>
+                        </div>
+                        
+                    </form>
+
+
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-Ocelot " id="submitStaff">SAVE</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>

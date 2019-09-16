@@ -1,0 +1,468 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles{
+
+    <link href="~/Content/jquery-ui.min.css" rel="stylesheet" />
+    <link href="~/Content/select2.css" rel="stylesheet" />
+    <link href="~/Content/DataTables/css/jquery.dataTables.css" rel="stylesheet" />
+    <link href="~/Content/css/bootstrap-datepicker3.min.css" rel="stylesheet" />
+    <link href="~/Content/sweetalert/sweetalert.css" rel="stylesheet" />
+    <style>
+        .datepicker {
+            background-color: #ffffff;
+            color: grey;
+        }
+    </style>
+}
+@section Scripts{
+    <script src="~/Content/jquery-ui.js"></script>
+    <script src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script src="~/Content/js/plugins/datepicker/bootstrap-datepicker.min.js"></script>
+    <script src="~/Content/js/plugins/icheck/icheck.min.js"></script>
+    <script src="~/Content/js/plugins/inputmask/jquery.inputmask.bundle.min.js"></script>
+
+    <script src="~/Content/select2.js"></script>
+    <script src="~/Content/sweetalert/sweetalert.min.js"></script>
+    <script src="~/Scripts/Common.js"></script>
+    <script>
+        var url; var postObj; var shopsArr = []; var unAssignedArr = []; populateShop();
+        $('.select2').select2();
+        $('#addShop').on('click', function () {
+
+            $('#addShopModal').modal('show');
+        });
+        $('#submitAddShop').on('click', function () {
+            if (validatingUsingClass("addShopForm") === 0) {
+                url = '/Shop/AddShop';
+                postObj = {
+                    "ShopName": $('#ShopName').val(),
+                    "Route": $('#Route').val(),
+                    "Territory": $('#Territory').val(),
+                    "Location": $('#Location').val(),
+                    "ZoneID": $('#zonesDropDowm option:selected').val()
+                };
+                customPost("Proceeding to add shop", url, postObj, "addShopModal", "addShopForm", "ADD SHOP",
+                    populateShop);
+            }
+        });
+        function populateShop() {
+            populateAssignedShop();
+            populateUnAssignedShop();
+        }
+        function populateAssignedShop() {
+            $('#shopsTable').DataTable({
+                data: getShops(),
+                destroy: true,
+                "autoWidth": false,
+                "order": false,
+                columns: [
+                    {
+                        title: "Actions", data: null, render: function (data, type) {
+                            if (type === 'display') {
+                                return '<center><div class="dropdown" >'
+                                    + '<a  style="width:80%;" class="fa fa-list btn btn-quickSWap dropdown-toggle "  data-toggle="dropdown" ">'
+                                    + '<span class="caret"></span></a>'
+                                    + '<ul class="dropdown-menu">'
+                                    + '<li><a onclick="reAssignShop(\'' + data.ShopID + '\')">RE-ASSIGN</a></li>'
+                                    + '</ul>'
+                                    + '</div></center>';
+                            }
+                            return data;
+                        }
+                    },
+                    { title: "ShopName", data: "ShopName" },
+                    { title: "Route", data: "Route" },
+                    { title: "Territory", data: "Territory" },
+                    { title: "Location", data: "Location" },
+                    { title: "Assigned To", data: "Email" }
+                ]
+            });
+        }
+        function populateUnAssignedShop() {
+            $('#unassignedShopsTable').DataTable({
+                data: getUnassignedShops(),
+                destroy: true,
+                "autoWidth": false,
+                "order": false,
+                columns: [
+                    {
+                        title: "Actions", data: null, render: function (data, type) {
+                            if (type === 'display') {
+                                return '<center><div class="dropdown" >'
+                                    + '<a  style="width:80%;" class="fa fa-list btn btn-quickSWap dropdown-toggle "  data-toggle="dropdown" ">'
+                                    + '<span class="caret"></span></a>'
+                                    + '<ul class="dropdown-menu">'
+                                    + '<li><a onclick="assignShop(\'' + data.ShopID + '\')">ASSIGN</a></li>'
+                                    + '<li><a onclick="editShop(\'' + data.ShopID + '\')">EDIT</a></li>'
+                                    + '</ul>'
+                                    + '</div></center>';
+                            }
+                            return data;
+                        }
+                    },
+                    { title: "ShopName", data: "ShopName" },
+                    { title: "Route", data: "Route" },
+                    { title: "Territory", data: "Territory" },
+                    { title: "Location", data: "Location" }
+                ]
+            });
+        }
+        function getShops() {
+            $.ajax({
+                url: '/Shop/GetsShop',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    shopsArr = res;
+                }
+
+            });
+            return shopsArr;
+        }
+        function getUnassignedShops() {
+            $.ajax({
+                url: '/Shop/GetUnAssignedShop',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    unAssignedArr = res;
+                }
+
+            });
+            return unAssignedArr;
+        }
+        function assignShop(id) {
+            jQuery.grep(unAssignedArr, function (n, i) {
+                if (n.ShopID === id) {
+                    $('#assignShopID').val(n.ShopID);
+                    $('#assignName').val(n.ShopName);
+                }
+            });
+            populateUsersDropDown();
+            $('#assignShopModal').modal('show');
+        }
+        function reAssignShop(id) {
+            jQuery.grep(shopsArr, function (n, i) {
+                if (n.ShopID === id) {
+                    $('#assignShopID').val(n.ShopID);
+                    $('#assignName').val(n.ShopName);
+                }
+            });
+            populateUsersDropDown();
+            $('#assignShopModal').modal('show');
+        }
+        $('#submitAssignUser').on('click', function () {
+            if (validatingUsingClass('assignShopForm') === 0) {
+                url = '/Shop/AssignShop';
+                postObj = {
+                    "ShopsID": $('#assignShopID').val(),
+                    "UserID": $('#UsersDropDown option:selected').val()
+                };
+                customPost("Proceed to assing shop", url, postObj, "assignShopModal", "assignShopForm",
+                    "ASSIGN SHOP", populateShop);
+
+            }
+
+        });
+        function populateUsersDropDown() {
+            var usersdrop = [];
+            usersdrop.push('<option value="">SELECT USER</option>');
+            getUsersDropDown().forEach(function (elem) {
+                usersdrop.push('<option value=' + elem.Id + '>' + elem.Email + '</option>');
+            });
+            $('#UsersDropDown').html(usersdrop);
+        }
+        function getUsersDropDown() {
+            var resss;
+            $.ajax({
+                url: '/admin/UserDropDowns',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    resss = res;
+                }
+            });
+            return resss;
+        }
+        function editShop(id) {
+            jQuery.grep(unAssignedArr, function (n, i) {
+                if (n.shopID === id) {
+                    $('#editShopID').val(Id);
+                    $('#editShopName').val(n.ShopName);
+                    $('#eRoute').val(n.Route);
+                    $('#eTerritory').val(n.Territory);
+                    $('#eLocation').val(n.Location);
+                }
+            });
+            $('#editShopModal').modal('show');
+        }
+        $('#submitEditShop').on('click', function () {
+            if (validatingUsingClass("submitEditShop") === 0) {
+                url = '/Shop/EditShop';
+                postObj = {
+                    "ShopID": $('#editShopID').val(),
+                    "ShopName": $('#editShopName').val(),
+                    "Route": $('#eRoute').val(),
+                    "Territory": $('#eTerritory').val(),
+                    "Location": $('#eLocation').val()
+                };
+                customPost("Proceeding to add shop", url, postObj, "editShopModal", "editShopForm", "EDIT SHOP",
+                    populateShop);
+            }
+        });
+
+        function GetZones() {
+            var zones;
+            $.ajax({
+                url: '/zone/GetZones',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    zones = res;
+                }
+            });
+            return zones;
+        }
+        populateZonesDropDown();
+        function populateZonesDropDown() {
+            var zonesdropdownarr = [];
+            zonesdropdownarr.push('<option>SELECT A ZONE</option>')
+            GetZones().forEach(function (elem) {
+                zonesdropdownarr.push('<option value=' + elem.ID + '>' + elem.Name + '</option>');
+            });
+            $('#zonesDropDowm').html(zonesdropdownarr);
+        }
+    </script>
+}
+<!-- Content Header (Page header) -->
+<section class="content-header">
+    <h1>
+        SHOPS
+        <small style="color:white"> adds shop and assigns user to shop</small>
+    </h1>
+</section>
+
+<!-- main section-->
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box">
+                <div class="box-header">
+                    <div class="pull-right">
+                        <a id="addShop" class="btn btn-Ocelot">ADD</a>
+                    </div>
+                </div>
+                <div class="box-body">
+                    <!-- Custom Tabs -->
+                    <div class="nav-tabs-custom">
+                        <ul class="nav nav-tabs">
+                            <li class="active"><a href="#tab_1" data-toggle="tab">UnAssigned Shops</a></li>
+                            <li><a href="#tab_2" data-toggle="tab">Assigned Shops</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="tab_1">
+                                <div class="row">
+                                    <div class="col-md-12 ">
+                                        <table id="unassignedShopsTable" class="table table-bordered table-condensed"></table>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- /.tab-pane -->
+                            <div class="tab-pane" id="tab_2">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <table id="shopsTable" class="table table-bordered"></table>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- /.tab-pane -->
+                        </div>
+                        <!-- /.tab-content -->
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- add shop modal -->
+    <div id="addShopModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header btn-Ocelot">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">ADD SHOP</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="addShopForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>SHOP NAME:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="ShopName" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>ROUTE:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="Route" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>TERRITORY:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="Territory" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>LOCATION:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="Location" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div><br /><br />
+                     
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <a id="submitAddShop" class="btn btn-Ocelot">SAVE</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- edit shop modal -->
+    <div id="editShopModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header btn-Ocelot">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">EDIT SHOP</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="editShopForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>SHOP NAME:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="editShopID" hidden />
+                                        <input id="editShopName" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>ROUTE:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="eRoute" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>TERRITORY:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="eTerritory" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>LOCATION:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="eLocation" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <a id="submitEditShop" class="btn btn-Ocelot">SAVE</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- assign shop -->
+    <div id="assignShopModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">ASSIGN SHOP</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="assignShopForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <label>SHOP:</label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <input id="assignShopID" class="validate-required" hidden />
+                                        <input id="assignName" class="form-control validate-required" readonly />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <label>USER:</label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <select id="UsersDropDown" class="form-control select2 validate-required" style="width:100%;"></select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <a id="submitAssignUser" class="btn btn-quickSWap">SAVE</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</section>

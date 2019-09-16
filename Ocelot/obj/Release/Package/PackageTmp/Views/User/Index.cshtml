@@ -1,0 +1,338 @@
+﻿
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+
+    <!-- Date Picker -->
+    <link rel="stylesheet" href="~/bower_components/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css">
+    <!-- Daterange picker -->
+    <link rel="stylesheet" href="~/bower_components/bootstrap-daterangepicker/daterangepicker.css">
+    <!-- DataTables -->
+    <link rel="stylesheet" href="~/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css">
+    <!-- Select2 -->
+    <link rel="stylesheet" href="~/bower_components/select2/dist/css/select2.min.css">
+
+}
+@section Scripts {
+    <!-- Select2 -->
+    <script src="~/bower_components/select2/dist/js/select2.full.min.js"></script>
+    <script src="~/bower_components/bootstrap-daterangepicker/daterangepicker.js"></script>
+    <!-- datepicker -->
+    <script src="~/bower_components/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
+    <!-- DataTables -->
+    <script src="~/bower_components/datatables.net/js/jquery.dataTables.min.js"></script>
+
+    <script src="~/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
+    <script src="~/js/Common.js"></script>
+    <script>
+        var users = []; populateUsers(); var url; var postObj = {}; var newusers = [];
+        function GetUsers() {
+            $.ajax({
+                url: '/User/GetUsers',
+                async: false,
+                type: 'GET',
+                success: function (res) {
+                    users = res;
+                }
+
+            });
+            return users;
+        }
+        function GetNewUsers() {
+            $.ajax({
+                url: '/User/GetNewUsers',
+                async: false,
+                type: 'GET',
+                success: function (res) {
+                    
+                    newusers = res;
+                }
+
+            });
+            return newusers;
+        }
+        function populateUsers(){
+            populateAllUsers();
+            populateNewUsers();
+        }
+        function populateAllUsers() {
+            $('#usersTable').DataTable({
+                data: GetUsers(),
+                "autoWidth": false,
+                destroy:true,
+                columns: [
+                    {
+                        title: "Actions", data: null, render: function (data, type) {
+                            if (type === 'display') {
+                                return '<center><div class="dropdown">'
+                                    + '<a  style="width:80%;" class="fa fa-list btn btn-quickSWap dropdown-toggle" data-toggle="dropdown" ">'
+                                    + '<span class="caret"></span></a>'
+                                    + '<ul class="dropdown-menu">'
+                                    + '<li><a onclick="editUser(\'' + data.id + '\')">EDIT</a></li>'
+                                    + '<li><a onclick="assignToGroup(\'' + data.id + '\')">ASSIGN GROUP</a></li>'
+                                    + '</ul>'
+                                    + '</div></center>';
+                            }
+                            return data;
+                        },
+                        className: "dt-body-center"
+                    },
+                    { title: "UserName", data:"userName" },
+                    { title: "Email", data:"email" },
+                    { title: "PhoneNumber", data:"phoneNumber" },
+                    { title: "GroupName", data:"groupName" }
+                ]
+            });
+        }
+        function populateNewUsers() {
+            $('#newusersTable').DataTable({
+                data: GetNewUsers(),
+                "autoWidth": false,
+                destroy:true,
+                columns: [
+                    {
+                        title: "Actions", data: null, render: function (data, type) {
+                            if (type === 'display') {
+                                return '<center><div class="dropdown">'
+                                    + '<a  style="width:80%;" class="fa fa-list btn btn-quickSWap dropdown-toggle" data-toggle="dropdown" ">'
+                                    + '<span class="caret"></span></a>'
+                                    + '<ul class="dropdown-menu">'
+                                    + '<li><a onclick="editNewUser(\'' + data.id + '\')">EDIT</a></li>'
+                                    + '<li><a onclick="assignNewToGroup(\'' + data.id + '\')">ASSIGN GROUP</a></li>'
+                                    + '</ul>'
+                                    + '</div></center>';
+                            }
+                            return data;
+                        },
+                        className: "dt-body-center"
+                    },
+                    { title: "UserName", data:"userName" },
+                    { title: "Email", data:"email" },
+                    { title: "PhoneNumber", data:"phoneNumber" }
+                ]
+            });
+        }
+        function editUser(id) {
+            jQuery.grep(users, function (n, i) {
+                if (n.id === id) {
+                    $('#userId').val(id);
+                    $('#Email').val(n.email);
+                    $('#PhoneNumber').val(n.phoneNumber);
+                    $('#UserName').val(n.userName);
+                }
+            });
+            $('#editUserModal').modal('show');
+        }
+        function editNewUser(id) {
+            jQuery.grep(GetNewUsers(), function (n, i) {
+                if (n.id === id) {
+                    $('#userId').val(id);
+                    $('#Email').val(n.email);
+                    $('#PhoneNumber').val(n.phoneNumber);
+                    $('#UserName').val(n.userName);
+                }
+            });
+            $('#editUserModal').modal('show');
+        }
+        function assignToGroup(id) {
+            jQuery.grep(users, function (n, i) {
+                if (n.id === id) {
+                    $('#assignUserId').val(id);
+                    $('#assignUserName').val(n.userName);
+                }
+            });
+            $('#assignGroupModal').modal('show');
+        }
+        function assignNewToGroup(id) {
+            jQuery.grep(GetNewUsers(), function (n, i) {
+                if (n.id === id) {
+                    $('#assignUserId').val(id);
+                    $('#assignUserName').val(n.userName);
+                }
+            });
+            $('#assignGroupModal').modal('show');
+        }
+        $('#editUserSubmit').on('click', function () {
+            if (validatingUsingClass('editUserForm') === 0) {
+                url = '/User/EditUser';
+                postObj = {
+                    "Id": $('#userId').val(), "Email": $('#Email').val(), "PhoneNumber": $('#PhoneNumber').val(),
+                    "UserName": $('#UserName').val()
+                };
+                customPost("Proceed to edit user", url, postObj, "editUserModal", "editUserForm", "EDIT USER", populateUsers);
+            }
+        });
+        var groups = []; fetchGroups(); populateGroupsDropDown();
+        function populateGroupsDropDown() {
+            var groupsdropdow = [];
+            groupsdropdow.push('<option>SELECT A GROUP</option>');
+            groups.forEach(function (e) {
+                groupsdropdow.push('<option value=' + e.id + '>' + e.name + '</option>');
+            });
+            $('#groupDrowDowns').html(groupsdropdow);
+        }
+        function fetchGroups() {
+            $.ajax({
+                url: '/Group/GetGroups',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    groups = res;
+                }
+
+            });
+            return groups;
+        }
+        $('#assignGroup').on('click', function () {
+            if (validatingUsingClass('assignGroupForm') === 0) {
+                url = '/User/AssignGroup';
+                postObj = {
+                    "UserId": $('#assignUserId').val(),
+                    "GroupId": $('#groupDrowDowns option:selected').val()
+                };
+                customPost("Proceed to assing group", url,postObj, "assignGroupModal", "assignGroupForm", "ASSIGN GROUP", populateUsers);
+            }
+        });
+    </script>
+}
+<!-- Content Header (Page header) -->
+<section class="content-header">
+    <h1>
+        Users
+        <small style="color:white"> adds, updates and lists users</small>
+    </h1>
+</section>
+
+<!-- main section-->
+<section class="content">
+    <div class="box">
+        <div class="box-header">
+
+        </div>
+        <div class="box-body">
+            <div class="nav-tabs-custom">
+                <ul class="nav nav-tabs">
+                    <li class="active"><a href="#tab_1" data-toggle="tab">USERS</a></li>
+                    <li><a href="#tab_2" data-toggle="tab">NEW USERS</a></li>
+                    <li class="pull-right"><a href="#" class="text-muted"><i class="fa fa-gear"></i></a></li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane active" id="tab_1">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <table id="usersTable" class="table table-bordered table-responsive"></table>
+                            </div>
+                        </div>
+                    </div> 
+                    <div class="tab-pane " id="tab_2">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <table id="newusersTable" class="table table-bordered table-responsive"></table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    <!-- edit user modal -->
+    <div id="editUserModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-md">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Edit User</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <label>User Name:</label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <input type="hidden" id="userId" class="form-control validate-required" />
+                                        <input type="text" id="UserName" class="form-control validate-required" />
+                                    </div>
+                                </div><br />
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <label>Email:</label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <input type="email" id="Email" class="form-control validate-required" />
+                                    </div>
+                                </div><br />
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <label>Phone Number:</label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <input type="text" id="PhoneNumber" onkeyup="validateNumber(this.id)" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <a id="editUserSubmit" class="btn btn-quickSWap">EDIT</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- assign user to group -->
+    <div id="assignGroupModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">ASSIGN GROUP</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="assignGroupForm">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <label>USER:</label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <input id="assignUserId" hidden/>
+                                        <input id="assignUserName" class="form-control validate-required" readonly/>
+                                    </div>
+                                </div><br />
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="row">
+                                            <div class="col-md-2">
+                                                <label>GROUP:</label>
+                                            </div>
+                                            <div class="col-md-10">
+                                                <select id="groupDrowDowns" class="form-control validate-required select2" style="width:100%" ></select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    
+                </div>
+                <div class="modal-footer">
+                    <a id="assignGroup"  class="btn btn-quickSWap" >ASSIGN</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>

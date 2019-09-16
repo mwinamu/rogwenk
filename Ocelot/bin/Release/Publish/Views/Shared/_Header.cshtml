@@ -1,0 +1,41 @@
+﻿@using  Ocelot.Service
+<header class="main-header" >
+    @* BEGIN Logo *@
+    <a href="@Url.Action("Index", "Home")" class="logo">
+        @* Mini logo for sidebar 50x50 pixels *@
+        <span class="logo-mini"><b>A</b>LT</span>
+        @* Logo for regular state and mobile devices *@
+        <span class="logo-lg" style="color:white"><b>Rogwenk</b></span>
+    </a>
+    @* END Logo *@
+    @* BEGIN Header *@
+    <nav class="navbar navbar-static-top" role="navigation" style="background-color:#E75E20">
+        <a href="#" class="sidebar-toggle" data-toggle="push-menu" role="button">
+            <span class="sr-only">Toggle navigation</span>
+        </a>
+        <div class="navbar-custom-menu">
+            <ul class="nav navbar-nav" >
+                @* BEGIN User Account Menu *@
+                <li class="dropdown user user-menu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                        @*<img src="~/Content/img/user.jpg" class="user-image" alt="User Image">*@
+                        <span class="hidden-xs" style="color:white">@RoleChecker.UserName()</span>
+                    </a>
+                    <ul class="dropdown-menu" style="background-color: #E75E20;color:white">
+                        <li class="user-header">
+                            <p>
+                                @RoleChecker.UserName()
+                            </p>
+                        </li>
+                        <li class="user-footer" style="background-color: #E75E20;color:white">
+                            <div class="pull-right">
+                                <a href="/Account/Logout" class="btn btn-default btn-flat" style="background-color: #E75E20;color:white">Sign out</a>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+                @* END User Account Menu *@
+            </ul>
+        </div>
+    </nav>
+</header>

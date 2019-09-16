@@ -1,0 +1,54 @@
+﻿@using System.Web.Optimization
+@using WebHelpers.Mvc5.Enum
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>
+        @if (!string.IsNullOrWhiteSpace(ViewBag.Title))
+        {
+            @ViewBag.Title@: -
+        }
+        AdminLTE
+    </title>
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    @Styles.Render("~/Bundles/css")
+    <style>
+
+        .btn-Ocelot {
+            background-color: #E75E20;
+            color: white
+        }
+    </style>
+
+    @RenderSection("Styles", required: false)
+    <link href="~/Content/Loader/loading.css" rel="stylesheet" />
+</head>
+<body id="bady">
+
+    <div class="wrapper" style="background-color: #F36B2C;">
+        @Html.Partial("_Header")
+       @Html.Partial("_Sidebar")
+
+        <div class="content-wrapper">
+            <div class="overlay">
+
+                <div class="loader" id="kitu"></div>
+            </div>
+            @RenderBody()
+        </div>
+
+        @Html.Partial("_ControlSidebar")
+    </div>
+
+   
+    <script src="@RouteJs.RouteJsHandler.HandlerUrl"></script>
+    <script src="@EnumHandler.HandlerUrl"></script>
+    @Scripts.Render("~/Bundles/js")
+    @RenderSection("Scripts", required: false)
+    <script>
+        $('.loader').hide();
+    </script>
+</body>
+</html>

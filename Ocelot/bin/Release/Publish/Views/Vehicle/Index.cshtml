@@ -1,0 +1,356 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles{
+
+    <link href="~/Content/jquery-ui.min.css" rel="stylesheet" />
+    <link href="~/Content/select2.css" rel="stylesheet" />
+    <link href="~/Content/DataTables/css/jquery.dataTables.css" rel="stylesheet" />
+    <link href="~/Content/css/bootstrap-datepicker3.min.css" rel="stylesheet" />
+    <link href="~/Content/sweetalert/sweetalert.css" rel="stylesheet" />
+    <style>
+        .datepicker {
+            background-color: #ffffff;
+            color: grey;
+        }
+    </style>
+}
+@section Scripts{
+    <script src="~/Content/jquery-ui.js"></script>
+    <script src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script src="~/Content/js/plugins/datepicker/bootstrap-datepicker.min.js"></script>
+    <script src="~/Content/js/plugins/icheck/icheck.min.js"></script>
+    <script src="~/Content/js/plugins/inputmask/jquery.inputmask.bundle.min.js"></script>
+
+    <script src="~/Content/select2.js"></script>
+    <script src="~/Content/sweetalert/sweetalert.min.js"></script>
+    <script src="~/Scripts/Common.js"></script>
+    <script>
+        var vehiclesArr = []; var postObj; var url; populateVehicles();
+        function getVehicles() {
+            $.ajax({
+                url: '/Vehicle/GetVehicleList',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    vehiclesArr = res;
+                }
+            });
+            return vehiclesArr;
+        }
+        function populateVehicles() {
+            $('#vehiclestable').DataTable({
+                data: getVehicles(),
+                destroy: true,
+                "autoWidth": false,
+                order: false,
+                columns: [
+                    {
+                        title: "Actions", data: null, render: function (data, type) {
+                            if (type === 'display') {
+                                return '<center><div class="dropdown" >'
+                                    + '<a  style="width:80%;" class="fa fa-list btn btn-Ocelot dropdown-toggle "  data-toggle="dropdown" ">'
+                                    + '<span class="caret"></span></a>'
+                                    + '<ul class="dropdown-menu">'
+                                    + '<li><a onclick="editVehicle(\'' + data.ID + '\')">EDIT</a></li>'
+                                    + '<li><a onclick="Availability(\'' + data.ID + '\')">AVAILABILITY</a></li>'
+                                    + '</ul>'
+                                    + '</div></center>';
+                            }
+                            return data;
+                        }
+                    },
+                    { title: "Vehicle Registration", data: "VehicleRegistration" },
+                    { title: "Vehicle Type", data: "VehicleType" },
+                    { title: "Vehicle Capacity", data: "VehicleCapacity" },
+                    { title: "Fuel Consumption", data: "FuelConsumption" },
+                    {
+                        title: "Status", data: null, render: function (data, type, row) {
+                           // console.log(data);
+                            if (data.IsAvailable === 0) {
+                                return '<span class="label label-danger">UN AVAILABLE</span>';
+                            }
+                            else if (data.IsAvailable === 1) {
+                                return '<span class="label label-success">AVAILABLE</span>';
+                            }
+                        }
+                    },
+
+                ]
+            });
+        }
+        function editVehicle(id) {
+            jQuery.grep(vehiclesArr, function (n) {
+
+                if (n.ID === id) {
+                    $('#Vehicleid').val(ID);
+                    $('#eVehicleRegistration').val(n.VehicleRegistration);
+                    $('#eVehicleType').val(n.VehicleType);
+                    $('#eVehicleCapacity').val(n.VehicleCapacity);
+                    $('#eFuelConsumption').val(n.FuelConsumption);
+                }
+            });
+            $('#editVehicleModal').modal('show');
+        }
+        $('#addVehicle').on('click', function () {
+            $('#addVehicleModal').modal('show');
+        });
+        $('#submitAddVehicle').on('click', function () {
+            if (validatingUsingClass("addVehicleForm") === 0) {
+                postObj = {
+                    "VehicleRegistration": $('#VehicleRegistration').val(),
+                    "VehicleType": $('#VehicleType').val(),
+                    "VehicleCapacity": $('#VehicleCapacity').val(),
+                    "FuelConsumption": $('#FuelConsumption').val()
+                };
+                url = '/vehicle/AddVehicle';
+                customPost("Proceed to add vehicle?", url, postObj, "addVehicleModal", "addVehicleForm", "ADD VEHICLE", populateVehicles);
+            }
+        });
+        $('#submitEditVehicle').on('click', function () {
+            if (validatingUsingClass("editVehicleForm") === 0) {
+                postObj = {
+                    "ID": $('#Vehicleid').val(),
+                    "VehicleRegistration": $('#eVehicleRegistration').val(),
+                    "VehicleType": $('#eVehicleType').val(),
+                    "VehicleCapacity": $('#eVehicleCapacity').val(),
+                    "FuelConsumption": $('#eFuelConsumption').val()
+                };
+                url = '/Vehicle/EditVehicle';
+                customPost("Proceed to edit vehicle?", url, postObj, "editVehicleModal", "editVehicleForm", "EDITR VEHICLE", populateVehicles);
+            }
+        });
+        function Availability(id) {
+            jQuery.grep(vehiclesArr, function (n, i) {
+                if (n.ID === id) {
+                    $('#availabilityID').val(n.ID);
+                    $('#availabilityReg').val(n.VehicleRegistration);
+                }
+            });
+            $('#availabilityModal').modal('show');
+        }
+        $('#saveAvailability').on('click', function () {
+            if (validatingUsingClass('availabilityForm') === 0) {
+                var postObj = {
+                    "ID": $('#availabilityID').val(),
+                    "IsAvailable": parseInt($('#availableDropDown option:selected').val())
+                }
+                console.log(postObj);
+                var url = '/Vehicle/UpdateAvailability';
+                customPost("Proceed to update vehicle availability", url, postObj, "availabilityModal", "availabilityForm", "UPDATE AVAILABILITY", populateVehicles);
+            }
+        });
+    </script>
+}
+<!-- Content Header (Page header) -->
+<section class="content-header">
+    <h1>
+        Vehicles
+        <small style="color:white">adds ,updates and lists vehicles</small>
+    </h1>
+</section>
+
+<!-- main section-->
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box ">
+                <div class="box-header with-border">
+                    Vehicles
+                    <a id="addVehicle" style="" class="btn btn-Ocelot pull-right">ADD</a>
+                </div>
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <table id="vehiclestable" class="table table-bordered table-condensed"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- edit Vehicle -->
+    <div id="editVehicleModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Edit Vehicle</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="editVehicleForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>VEHICLE REGISTRATION:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="hidden" id="Vehicleid" />
+                                        <input id="eVehicleRegistration" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>VEHICLE TYPE:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="eVehicleType" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>VEHICLE CAPACITY:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="eVehicleCapacity" onkeydown="validateNumber(this.id)" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>FUEL CONSUMPTION:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="eFuelConsumption" onkeyup="validateNumber(this.id)" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-Ocelot" id="submitEditVehicle">SAVE</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- Add Vehicle -->
+    <div id="addVehicleModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Add Vehicle</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="addVehicleForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>VEHICLE REGISTRATION:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="VehicleRegistration" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>VEHICLE TYPE:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="VehicleType" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>VEHICLE CAPACITY:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="VehicleCapacity" onkeydown="validateNumber(this.id)" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>FUEL CONSUMPTION</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="FuelConsumption" onkeyup="validateNumber(this.id)" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-Ocelot" id="submitAddVehicle">SAVE</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- Availability -->
+    <div id="availabilityModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">VEHICLE AVAILABILITY</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="availabilityForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>VEHICLE REGISTRATION:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="availabilityReg" class="form-control validate-required" readonly />
+                                        <input type="hidden" id="availabilityID" class="form-control validate-required" hidden />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>AVAILABILITY:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select id="availableDropDown" class="form-control validate-required">
+                                            <option value="1">AVAILABLE</option>
+                                            <option value="2">NOT AVAILABLE</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-Ocelot" id="saveAvailability">SAVE</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+

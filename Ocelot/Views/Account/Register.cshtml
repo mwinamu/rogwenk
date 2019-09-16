@@ -1,0 +1,66 @@
+﻿
+@{
+    ViewBag.Title = "Register";
+    Layout = "~/Views/Shared/_AccountLayout.cshtml";
+}
+
+<div class="login-box">
+    <div class="login-box-body">
+
+        <p class="login-box-msg" style="color:black">Register New User</p>
+        <form method="post" action="/Account/Register">
+            <div class="form-group has-feedback">
+                <input asp-for="Input.FirstName" name="FirstName" value="@TempData["FirstName"]" type="text" class="form-control" placeholder="Enter your first name" required>
+                <span class="glyphicon glyphicon-user form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <input asp-for="Input.LastName" name="LastName" value="@TempData["LastName"]" type="text" class="form-control" placeholder="Enter your other names" required>
+                <span class="glyphicon glyphicon-user form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <input asp-for="Input.Email" name="Email" value="@TempData["Email"]" type="email" class="form-control" placeholder="Enter your email" required>
+                <span class="glyphicon glyphicon-envelope form-control-feedback"></span>
+                <span asp-validation-for="Input.Email" class="help-block"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <input asp-for="Input.PhoneNumber" name="PhoneNumber" value="@TempData["PhoneNumber"]" type="number" class="form-control" placeholder="Enter your phone number" required>
+                <span class="glyphicon glyphicon-phone form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <input asp-for="Input.Password" name="Password" value="@TempData["Password"]" type="Password" class="form-control" placeholder="Enter password" required>
+                <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <input asp-for="Input.ConfirmPassword" name="ConfirmPassword" value="@TempData["Password"]" type="Password" class="form-control" placeholder="Confirm pssword" required>
+                <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+               
+            </div>
+            <div class="row">
+                <div class="col-xs-12">
+                    @if (@TempData["REGISTER"] == "REGISTER")
+                    {
+
+                        <div class="alert alert-danger alert-dismissible mainbox  col-md-12 ">
+                            @TempData["message"]
+                        </div>
+
+                    }
+                </div>
+
+            </div>
+            <div class="row">
+                <div class="col-xs-8">
+                    <div class="checkbox icheck">
+                        <label style="color:white">
+                            <a href="/Account/Index" style="color:#C70039"> Already have an account</a>
+                        </label>
+                    </div>
+                </div>
+                <div class="col-xs-4 pull-right">
+                    <button type="submit" class="btn btn-block btn-flat" style="background-color:#C70039;color:white">Register</button>
+                </div>
+            </div>
+        </form>
+</div>
+</div>
+

@@ -1,0 +1,820 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles{
+
+    <link href="~/Content/jquery-ui.min.css" rel="stylesheet" />
+    <link href="~/Content/select2.css" rel="stylesheet" />
+    <link href="~/Content/DataTables/css/jquery.dataTables.css" rel="stylesheet" />
+    <link href="~/Content/css/bootstrap-datepicker3.min.css" rel="stylesheet" />
+    <link href="~/Content/sweetalert/sweetalert.css" rel="stylesheet" />
+    <style>
+        .datepicker {
+            background-color: #ffffff;
+            color: grey;
+        }
+    </style>
+}
+@section Scripts{
+    <script src="~/Content/jquery-ui.js"></script>
+    <script src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script src="~/Content/js/plugins/datepicker/bootstrap-datepicker.min.js"></script>
+    <script src="~/Content/js/plugins/icheck/icheck.min.js"></script>
+    <script src="~/Content/js/plugins/inputmask/jquery.inputmask.bundle.min.js"></script>
+
+    <script src="~/Content/select2.js"></script>
+    <script src="~/Content/sweetalert/sweetalert.min.js"></script>
+    <script src="~/Scripts/Common.js"></script>
+    <script>
+        // local arrays and variables
+        var startdate; var enddate;
+        var todaysdate = $.datepicker.formatDate('yy/mm/dd', new Date());
+        var lastweeksdate = new Date().getFullYear().toString().concat('/').concat(new Date().getMonth().toString()).concat('/').concat((new Date().getDate() - 7).toString());
+
+        // calling functions section
+        setStartAndEndDate();
+        CardPopulation(todaysdate, todaysdate);
+        customGetFunctionForCards('/Vendor/TotalSales?StartDate=' + lastweeksdate + '&EndDate=' + todaysdate + '', populatewTDNumbers);
+        populateWithdrawals();
+        // set start date and end date fields for user understanding
+        function setStartAndEndDate() {
+            $('#vendorSummaryStartDate').val(todaysdate);
+            $('#vendorSummaryEndDate').val(todaysdate);
+        }
+
+        // datepickers for start dates and end dates
+        $('#vendorSummaryStartDate').datepicker({ dateFormat: 'yy/mm/dd' }); $('#vendorSummaryEndDate').datepicker({ dateFormat: 'yy/mm/dd' });
+
+        // initially populates cards
+        function CardPopulation(startdate, enddate) {
+            customGetFunctionForCards('/Vendor/ActiveVendors?StartDate=' + startdate + '&EndDate=' + enddate + '', pupoltaeActiveVendorsNumber);
+            customGetFunctionForCards('/Vendor/TotalCommission?StartDate=' + startdate + '&EndDate=' + enddate + '', pupolatesTotalCommissionNumber);
+            customGetFunctionForCards('/Vendor/TotalSales?StartDate=' + startdate + '&EndDate=' + enddate + '', populateTotalSalesNumber);
+            customGetFunctionForCards('/vendor/TransfersCount?StartDate=' + startdate + '&EndDate=' + enddate + '', populateSTOTotalTransfers);
+            customGetFunctionForCards('/vendor/TotalStockTransfered?StartDate=' + startdate + '&EndDate=' + enddate + '', populateTotalStockTransfered);
+
+        }
+
+        // custom get function and populate , pass a url, arr  and a populationg function name
+        function customGetFunction(url, getArr, populatingFunction) {
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function (res) {
+                    getArr = res;
+                    populatingFunction();
+                }
+
+            });
+        }
+        // populate active venddors number
+        function customGetFunctionForCards(url, populatingFunction) {
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function (res) {
+                    populatingFunction(res);
+                }
+
+            });
+        }
+
+        // populates  active vendors numbers
+        function pupoltaeActiveVendorsNumber(res) {
+            $('#totalActiveVendors').html(res.ActiveVendors);
+        }
+
+        // populates  active vendors numbers
+        function pupolatesTotalCommissionNumber(res) {
+            $('#totalCommissions').html(res.TotalCommission);
+        }
+
+        //  populates total sales count/numbers
+        function populateTotalSalesNumber(res) {
+            $('#totalSales').html(res.TotalSales);
+        }
+
+        // populates wtd number
+        function populatewTDNumbers(res) {
+            $('#totalWtdSales').html(res.TotalSales);
+        }
+        // active vendors on click fucntion
+        function activeVendors() {
+            // populate modal
+            $('#vendorSummaryPop').DataTable({
+                data: getVendorSalesSummary(),
+                destroy: true,
+                dom: 'Bfrtip',
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ],
+                columns: [
+
+                    {
+                        title: "Vendor Name", data: "BusinessName"
+                    },
+                    { title: "Complete 6KG", data: "Complete6KG" },
+                    { title: "Complete 13KG", data: "Complete13KG" },
+                    { title: "Outright 6KG", data: "Outright_6KG" },
+                    { title: "Outright 13KG", data: "Outright_13KG" },
+                    { title: "Refill 6KG", data: "Refill6KG" },
+                    { title: "Refill 13KG", data: "Refill13KG" },
+                    {
+                        title: "Latest Sale", data: null, render: function (data, type, row) {
+                            var dt = data.LatestSale;
+                            var _dateInt = new Date(parseInt(dt.substr(6)));
+                            var _date = _dateInt.toLocaleString();
+                            return _date;
+                        }
+                    },
+                    { title: "Total Cash", data: "TotalCash" }
+                ]
+            });
+            // show modal
+            $('#activeVendorsModal').modal('show');
+
+        }
+
+        // in active vendors on click function
+        function inActiveVendors() {
+            // populate modal
+
+            // show modal
+            $('#inActiveVendorsModal').modal('show');
+        }
+
+        //  total sales
+        function totalSales() {
+            // populate data
+
+            // show modal
+            // $("#totalSalesModal").modal('show');
+        }
+
+        // total commissions
+        function totalCommissions() {
+            // populate data
+
+            // show modal
+            //$('#totalCommissionsModal').modal('show');
+        }
+
+        // wtd sales click
+        function wtdSales() {
+            // populate data
+
+            // show modal
+            //$('#wtdSalesModal').modal('show');
+        }
+        function populateSTOTotalTransfers(res) {
+            $('#stoTransfered').html("Transfer Count:" + (res.TotalTransfers === "undefined" ? 0:res));
+
+        }
+        function populateTotalStockTransfered(res) {
+            $('#stoCounts').html("Total Transfered:" + (res === "undefined" ? 0:res));
+        }
+        // sTO click function
+        function sTO() {
+
+            fetchVendorStockTransfer();
+            $('#sTOModal').modal('show');
+        }
+
+        function totalStockTransferred() {
+            startdate = $('#vendorSummaryStartDate').val();
+            enddate = $('#vendorSummaryEndDate').val();
+            var stockTransferred;
+            $.ajax({
+                type: 'GET',
+                url: '/vendor/TotalStockTransfered?StartDate=' + startdate + '&EndDate=' + enddate + '',
+                success: function (res) {
+                    stockTransferred = res;
+                }
+            });
+            return stockTransferred;
+        }
+        function transfersCount() {
+            var stockTransferred;
+            startdate = $('#vendorSummaryStartDate').val();
+            enddate = $('#vendorSummaryEndDate').val();
+            $.ajax({
+                type: 'GET',
+                url: '/vendor/TransfersCount?StartDate=' + startdate + '&EndDate=' + enddate + '',
+                success: function (res) {
+                    //console.log(res);
+                    stockTransferred = res;
+                }
+            });
+            return stockTransferred;
+        }
+        // FETCH AND POPULATE STO
+        var vendorStockTransferArr = [];
+        function fetchVendorStockTransfer() {
+            startdate = $('#vendorSummaryStartDate').val();
+            enddate = $('#vendorSummaryEndDate').val();
+            $.ajax({
+                url: '/Vendor/VendorStockTransfer?StartDate=' + startdate + '&EndDate=' + enddate + '',
+                type: 'GET',
+                success: function (res) {
+                    vendorStockTransferArr = res;
+                    console.log(res);
+                    populateVendorStockTransfer();
+                }
+            });
+        }
+
+        function populateVendorStockTransfer() {
+            console.log(vendorStockTransferArr);
+            $('#stoDatatables').DataTable({
+                data: vendorStockTransferArr,
+                dom: 'Bfrtip',
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ],
+                destroy: true,
+                columns: [
+
+                    {
+                        title: "Vendor Name", data: "BusinessName"
+                    },
+                    { title: "Driver Name", data: "DriverName" },
+                    { title: "Transferred 6KG", data: "Transferred6KG" },
+                    { title: "Transferred 13KG", data: "Transferred13KG" },
+                    { title: "Transferred 50KG", data: "Transferred50KG" },
+                    { title: "Truck", data: "VRegNo" },
+                    { title: "Trip ID", data: "TripID" },
+                    { title: "Grills", data: "Grills" },
+                    {
+                        title: "Status", data: null, render: function (data, type, row) {
+                            var dt = data.Status;
+                            if (dt === 99) {
+                                return '<h5><span class="label label-info">PENDING </span></h6>';
+                            } else if (dt === 0) {
+                                return '<h5><span class="label label-success">ACCEPTED </span></h5>';
+                            } else if (dt === i) {
+                                return '<h5><span class="label label-warning">REJECTED</span></h5>';
+                            }
+                        }
+                    },
+                    {
+                        title: "Date Transferred", data: null, render: function (data, type, row) {
+                            var dt = data.DateTransferred;
+                            var _dateInt = new Date(parseInt(dt.substr(6)));
+                            var _date = _dateInt.toLocaleString();
+                            return _date;
+                        }
+                    }
+
+                ]
+            });
+        }
+
+
+        // to populate main dashboards datatables REVISIT
+
+        function getVendorSalesSummary() {
+            var summaryArr;
+            startdate = $('#vendorSummaryStartDate').val();
+            enddate = $('#vendorSummaryEndDate').val();
+            $.ajax({
+                url: '/Vendor/vendorsalessummary?StartDate=' + startdate + '&EndDate=' + enddate + '',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    summaryArr = res;
+                }
+            });
+            return summaryArr;
+        }
+
+        $(document).ready(function () {
+
+            vendorSumamryAll();
+            // vendor summary start date change
+            $('#vendorSummaryStartDate').on('change', function () {
+                startdate = $('#vendorSummaryStartDate').val();
+                enddate = $('#vendorSummaryEndDate').val();
+                CardPopulation(startdate, enddate);
+                vendorSumamryAll();
+                populateWithdrawals();
+            });
+
+            // vendor end date change function
+            $('#vendorSummaryEndDate').on('change', function () {
+                startdate = $('#vendorSummaryStartDate').val();
+                enddate = $('#vendorSummaryEndDate').val();
+                CardPopulation(startdate, enddate);
+                vendorSumamryAll();
+                populateWithdrawals();
+            });
+        });
+        function vendorSumamryAll() {
+            var tableS = $('#vendorSummary').DataTable({
+                data: getVendorSalesSummary(),
+                dom: 'Bfrtip',
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ],
+                destroy: true,
+                columns: [
+
+                    {
+                        title: "Vendor Name", data: "BusinessName"
+                    },
+                    { title: "Complete 6KG", data: "Complete6KG" },
+                    { title: "Complete 13KG", data: "Complete13KG" },
+                    { title: "Outright 6KG", data: "Outright_6KG" },
+                    { title: "Outright 13KG", data: "Outright_13KG" },
+                    { title: "Refill 6KG", data: "Refill6KG" },
+                    { title: "Refill 13KG", data: "Refill13KG" },
+                    {
+                        title: "Latest Sale", data: null, render: function (data, type, row) {
+                            var dt = data.LatestSale;
+                            var _dateInt = new Date(parseInt(dt.substr(6)));
+                            var _date = _dateInt.toLocaleString();
+                            return _date;
+                        }
+                    },
+                    { title: "Total Cash", data: "TotalCash" }
+                ]
+            });
+            $('#vendorSummary').on('click', 'tr', function () {
+
+                var bussinessId; var VendorName;
+                if (tableS.row(this).data() === undefined) {
+                    console.log(this);
+                } else {
+                    bussinessId = tableS.row(this).data().BussinessID;
+                    VendorName = tableS.row(this).data().BusinessName;
+                }
+                fetchAndPopulatePerVendor(bussinessId, VendorName);
+            });
+        }
+
+        function fetchAndPopulatePerVendor(bussinessId, VendorName) {
+            $('#perVendorTitle').html((VendorName + " details").toUpperCase());
+            populatePerVendor(bussinessId);
+            $('#perVendorModal').modal('show');
+        }
+        function fetchPerVendor(bussinessId) {
+            var perVendor;
+            startdate = $('#vendorSummaryStartDate').val();
+            enddate = $('#vendorSummaryEndDate').val();
+            $.ajax({
+                url: '/Vendor/VendorTransactions?StartDate=' + startdate + '&EndDate=' + enddate + '&BusinessID=' + bussinessId + '',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    perVendor = res;
+                }
+            });
+            return perVendor;
+        }
+        // perVendor
+        function populatePerVendor(bussinessId) {
+            $('#perVendor').DataTable({
+                data: fetchPerVendor(bussinessId),
+                destroy: true,
+                dom: 'Bfrtip',
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ],
+                columns: [
+                    { title: "Tran ID", data: "TransID" },
+                    { title: "Tran Amount", data: "TranAmount" },
+                    { title: "Complete 6KG", data: "Complete6KG" },
+                    { title: "Complete 13KG", data: "Complete13KG" },
+                    { title: "Outright 6KG", data: "Outright_6KG" },
+                    { title: "Outright 13KG", data: "Outright_13KG" },
+                    { title: "Outright 50KG", data: "Outright_50KG" },
+                    { title: "Refill 6KG", data: "Refill_6KG" },
+                    { title: "Refill 13KG", data: "Refill_13KG" },
+                    { title: "Refill 50KG", data: "Refill_50KG" }
+
+                ]
+            });
+        }
+
+        function FetchVedorWithDrawals() {
+            startdate = $('#vendorSummaryStartDate').val();
+            enddate = $('#vendorSummaryEndDate').val();
+            var withdrawals;
+            $.ajax({
+                type: 'GET',
+                url: '/vendor/VendorWithdrawals?StartDate=' + startdate + '&EndDate=' + enddate + '',
+                async: false,
+                success: function (res) {
+
+                    withdrawals = res;
+                }
+            });
+            return withdrawals;
+        }
+        function FetchTotalWithDrawals() {
+            startdate = $('#vendorSummaryStartDate').val();
+            enddate = $('#vendorSummaryEndDate').val();
+            var withdrawals;
+            $.ajax({
+                type: 'GET',
+                url: '/vendor/TotalWithdrawn?StartDate=' + startdate + '&EndDate=' + enddate + '',
+                async: false,
+                success: function (res) {
+                    console.log(res);
+                    withdrawals = res.TotalWithdrawn;
+                }
+            });
+            return withdrawals;
+        }
+        function populateWithdrawals() {
+            var totalWithdrawn = FetchTotalWithDrawals();
+            var title = "Vendor Withdrawals".concat("(TOTAL WITHRAWN AMOUNT:" + totalWithdrawn + ")");
+            var title = "Vendor Withdrawals".concat("(TOTAL WITHRAWN AMOUNT:" + totalWithdrawn + ")");
+            $("#vendorWithdrawalTitle").html(title);
+            $('#vendorWithdrawal').DataTable({
+                data: FetchVedorWithDrawals(),
+                destroy: true,
+                dom: 'Bfrtip',
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ],
+                columns: [
+
+                    {
+                        title: "Vendor Name", data: "BusinessName"
+                    },
+                    { title: "Receiver Party Public Name", data: "ReceiverPartyPublicName" },
+                    { title: "Trans ID", data: "TransID" },
+                    { title: "Transaction Amount", data: "TransactionAmount" },
+                    {
+                        title: "Transaction Completed At", data: null, render: function (data, type, row) {
+                            var dt = data.TransactionCompletedDateTime;
+                            var _dateInt = new Date(parseInt(dt.substr(6)));
+                            var _date = _dateInt.toLocaleString();
+                            return _date;
+                        }
+                    }
+                ]
+            });
+        }
+    </script>
+}
+<section class="content-header">
+    <h1>
+        Vendor
+        <small style="color:white"> dashbord</small>
+    </h1>
+</section>
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+
+            <div class="box">
+                <div class="box-body">
+                    <div class="col-lg-2 col-xs-6" onclick="activeVendors()">
+                        <!-- small box -->
+                        <div class="small-box " style="background-color:#773C30;color:white">
+                            <div class="inner">
+                                <p>Active Vendors </p>
+                                <h5 id="totalActiveVendors">0</h5>
+                            </div>
+                            <!--on click modal show-->
+                            <a class="small-box-footer">
+                                More Details <i class="fa fa-arrow-circle-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-xs-6" onclick="inActiveVendors()">
+                        <!-- small box -->
+                        <div class="small-box " style="background-color:#7e7874;color:white">
+
+                            <div class="inner">
+                                <p>In Active Vendors</p>
+
+                                <h5 id="totalIncativeVednors">0</h5>
+                            </div>
+                            <!--on click modal show-->
+                            <a class="small-box-footer">
+                                More Details <i class="fa fa-arrow-circle-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-xs-6" onclick="wtdSales()">
+                        <!-- small box -->
+                        <div class="small-box " style="background-color:#89d92b57;color:white">
+                            <div class="inner">
+                                <p> WTD Sales</p>
+
+                                <h5 id="totalWtdSales">0</h5>
+                            </div>
+                            <!--on click modal show-->
+                            <a class="small-box-footer">
+                                More Details  <i class="fa fa-arrow-circle-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-xs-6" onclick="totalSales()">
+                        <!-- small box -->
+                        <div class="small-box " style="background-color:#e8eefe;color:white">
+                            <div class="inner">
+                                <p>Total Sales</p>
+
+                                <h5 id="totalSales">5</h5>
+                            </div>
+                            <!--on click modal show-->
+                            <a class="small-box-footer">
+                                More Details  <i class="fa fa-arrow-circle-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-xs-6" onclick="sTO()">
+                        <!-- small box -->
+                        <div class="small-box " style="background-color:#b51a1d3f;color:white">
+                            <div class="inner">
+                                <p id="stoTransfered">STOs</p>
+
+                                <h5 id="stoCounts">0</h5>
+                            </div>
+                            <!--on click modal show-->
+                            <a class="small-box-footer">
+                                More Details  <i class="fa fa-arrow-circle-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><br />
+
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box ">
+
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <form id="vendorSummaryStartAndEndDates">
+                                <div class="row">
+                                    <div class="col-xs-6">
+                                        <div class="row">
+                                            <div class="col-xs-2">
+                                                <label for="vendorSummaryStartDate">Start Date:</label>
+                                            </div>
+                                            <div class="col-xs-10">
+                                                <input class="form-control col-xs-2" id="vendorSummaryStartDate">
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="col-xs-6">
+                                        <div class="row">
+                                            <div class="col-xs-2">
+                                                <label for="vendorSummaryStartDate">End Date:</label>
+                                            </div>
+                                            <div class="col-xs-10">
+                                                <input type="datetime" class="form-control col-xs-10" id="vendorSummaryEndDate">
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+        <!-- /.box-body -->
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h6 class="box-title">Áctive Vendors</h6>
+
+                    <div class="box-tools pull-right">
+                        <a class="btn btn-box-tool" data-widget="collapse">
+                            <i class="fa fa-minus"></i>
+                        </a>
+                    </div>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body  chart-responsive table-responsive">
+                    <table id="vendorSummary" class="table table-bordered table-hover"></table>
+                </div>
+                <!-- /.box-body -->
+            </div>
+        </div>
+    </div>
+    <div class="row" hidden>
+        <div class="col-xs-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h6 class="box-title" id="vendorWithdrawalTitle"></h6>
+
+                    <div class="box-tools pull-right">
+                        <a class="btn btn-box-tool" data-widget="collapse">
+                            <i class="fa fa-minus"></i>
+                        </a>
+                    </div>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body  chart-responsive table-responsive">
+                    <table id="vendorWithdrawal" class="table table-bordered table-hover"></table>
+                </div>
+                <!-- /.box-body -->
+            </div>
+        </div>
+    </div>
+    <!-- active vendors modal -->
+    <!-- Modal -->
+    <div id="activeVendorsModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Active Vendors</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <div class="box box-primary" onscroll="true">
+
+                                <!-- /.box-header -->
+                                <div class="box-body table-responsive" overflow: scroll;">
+                                    <table id="vendorSummaryPop" class="table table-bordered table-hover"></table>
+                                </div>
+                                <!-- /.box-body -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- in active vendors modal -->
+    <!-- Modal -->
+    <div id="inActiveVendorsModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">In Active Vendors</h4>
+                </div>
+                <div class="modal-body">
+                    <p>In active vendors.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- total sales modal -->
+    <!-- Modal -->
+    <div id="totalSalesModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Total Sales</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Some text in the modal.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- wtd sales modal -->
+    <!-- Modal -->
+    <div id="wtdSalesModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">WTD Sales</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Some text in the modal.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- total commission modal -->
+    <!-- Modal -->
+    <div id="totalCommissionsModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Total Commissions</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Some text in the modal.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Sto Modal -->
+    <div id="sTOModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">STO</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <div class="box box-primary">
+
+                                <!-- /.box-header -->
+                                <div class="box-body table-responsive">
+                                    <table id="stoDatatables" class="table table-bordered table-hover"></table>
+                                </div>
+                                <!-- /.box-body -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- Per Vendor Modal -->
+    <div id="perVendorModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title" id="perVendorTitle">Per Vendor</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <div class="box box-primary">
+
+                                <!-- /.box-header -->
+                                <div class="box-body table-responsive">
+                                    <table id="perVendor" class="table table-bordered table-hover"></table>
+                                </div>
+                                <!-- /.box-body -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- real time tables on click modal -->
+</section>

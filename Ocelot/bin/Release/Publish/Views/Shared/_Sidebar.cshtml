@@ -1,0 +1,129 @@
+﻿@using WebHelpers.Mvc5
+@using  Ocelot.Service
+<aside class="main-sidebar" style="color: white">
+    <section class="sidebar" >
+        @* BEGIN Menu *@
+        <ul class="sidebar-menu" data-widget="tree">
+            @if (RoleChecker.HasRole("Administrators"))
+            {
+                <li class="treeview" style="color:white">
+                    <a href="#" style="color:white">
+                        <i class="fa fa-truck"></i>
+                        <strong style="color:white"><span>Logistics</span> </strong>
+                        <i class="fa fa-angle-left pull-right"></i>
+                    </a>
+                    <ul class="treeview-menu">
+                        <li><a href="/Vehicle/index" style="color:white"><i class="fa fa-truck"></i>Vehicles</a></li>
+                        <li><a href="/Driver/index" style="color:white"><i class="fa fa-user"></i>Drivers</a></li>
+
+                    </ul>
+                </li>
+            }
+            @if (RoleChecker.HasRole("Administrator"))
+            {
+
+                <li><a href="/Price/index" style="color:white"><i class="fa fa-money"></i>Price</a></li>
+            }
+            @if (RoleChecker.HasRole("Administrator"))
+            {
+
+                <li><a href="/Shop/index" style="color:white"><i class="fa fa-contao"></i>Shop</a></li>
+            }  
+            @if (RoleChecker.HasRole("Administrator"))
+            {
+
+                <li><a href="/Drivers/index" style="color:white"><i class="fa fa-drivers-license"></i>Drivers</a></li>
+            }   @if (RoleChecker.HasRole("Administrator"))
+            {
+
+                <li><a href="/Vehicle/index" style="color:white"><i class="fa fa-truck"></i>Vehicles</a></li>
+            } 
+            @if (RoleChecker.HasRole("Administrator"))
+            {
+
+                <li><a href="/StockTransferOut/index" style="color:white"><i class="fa fa-contao"></i>Receipts</a></li>
+            } 
+            @if (RoleChecker.HasRole("Administrator"))
+            {
+
+                <li><a href="/StockTransferOut/StockFormDistributor" style="color:white"><i class="fa fa-long-arrow-left"></i>STO</a></li>
+            }
+            @if (RoleChecker.HasRole("Administrator"))
+            {
+
+                <li><a href="/StockTransferOut/StockIn" style="color:white"><i class="fa fa-long-arrow-right"></i>STI</a></li>
+            }
+            @if (RoleChecker.HasRole("Administrators"))
+            {
+                <li class="treeview">
+                    <a href="#" style="color:white">
+                        <i class="fa fa-truck"></i>
+                        <strong><span>Orders</span> </strong>
+                        <i class="fa fa-angle-left pull-right"></i>
+                    </a>
+                    <ul class="treeview-menu">
+                        <li><a href="/Order/OrderCreation"><i class="fa fa-upload"></i>New Order</a></li>
+                        <li><a href="/Order/Active"><i class="fa fa-shopping-basket"></i>Active Orders</a></li>
+                        <li><a href="/Order/Delivered"><i class="fa fa-shopping-bag"></i>Delivered Orders</a></li>
+                        <li><a href="/Order/Failed"><i class="fa fa-shopping-cart"></i>Failed/Cancelled Deliveries</a></li>
+                    </ul>
+                </li>
+            }
+
+            @if (RoleChecker.HasRole("Administrators"))
+            {
+                <li><a href="/FuelRequest/index" style="color:white"><i class="fa fa-fax"></i>Fuel Requests</a></li>
+            }
+            @if (RoleChecker.HasRole("Administrators"))
+            {
+
+                <li><a href="/Allowance/Requests" style="color:white"><i class="fa fa-money"></i>Claims & Allowance</a></li>
+            }
+            @if (RoleChecker.HasRole("Administrators"))
+            {
+
+                
+            }
+            @if (RoleChecker.HasRole("Administrators"))
+            {
+                <li class="treeview">
+                    <a href="#" style="color:white">
+                        <i class="fa fa-asterisk"></i>
+                        <strong style="color:white"><span>Accidents</span> </strong>
+                        <i class="fa fa-angle-left pull-right"></i>
+                    </a>
+                    <ul class="treeview-menu">
+                        <li><a href="/Vehicle/Accident" style="color:white"><i class="fa fa-gear"></i>Reported</a></li>
+                        <li><a href=""><i class="fa fa-user"></i>Reports</a></li>
+                    </ul>
+                </li>
+            }
+            @if (RoleChecker.HasRole("Administrators"))
+            {
+
+                <li><a href="/LeaveApplication/Index" style="color:white"><i class="fa fa-volume-off"></i>Leave Apps</a></li>
+            }
+            @if (RoleChecker.HasRole("Administrators"))
+            {
+
+                <li><a href="/Maintenance/Index" style="color:white"><i class="fa fa-gear"></i>Maintenance</a></li>
+            }
+            
+            @if (RoleChecker.HasRole("Administrators"))
+            {
+                <li class="treeview">
+                    <a href="#" style="color:white">
+                        <i class="fa fa-asterisk"></i>
+                        <strong style="color:white"><span>Reports</span> </strong>
+                        <i class="fa fa-angle-left pull-right"></i>
+                    </a>
+                    <ul class="treeview-menu">
+                        <li><a href="/Reports/TurnAround"><i class="fa fa-truck"></i>Turn Around</a></li>
+                        <li><a href="/Reports/TripCostSummary"><i class="fa fa-money"></i>Costs</a></li>
+                    </ul>
+                </li>
+            }
+        </ul>
+        @* END Menu *@
+    </section>
+</aside>

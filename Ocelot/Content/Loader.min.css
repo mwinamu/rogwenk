@@ -1,0 +1,40 @@
+﻿.loader {
+    border: 16px solid #D60448;
+    border-radius: 50%;
+    border-top: #D60448;
+    border-bottom: #D60448;
+    width: 120px;
+    height: 120px;
+    -webkit-animation: spin 2s linear infinite;
+    animation: spin 2s linear infinite;
+    position: absolute;
+    height: 100px;
+    width: 100px;
+    top: 50vh;
+    left: 50%;
+    transform-origin: center;
+    transform: translate(-50%, -50%) rotate(45deg);
+    background-color: transparent;
+}
+.overlay {
+    background: grey;
+    <- I left your 'gray' background display: none;
+    <- Not displayed by default position: absolute;
+    <- This and the following properties will top: 0;
+    make the overlay, the element will expand right: 0;
+    so as to cover the whole body of the page bottom: 0;
+    left: 0;
+    opacity: 0.5;
+}
+
+@-webkit-keyframes spin
+{
+  0% { -webkit - transform: rotate(0deg); }
+  100% { -webkit - transform: rotate(360deg); }
+}
+
+@keyframes spin
+{
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

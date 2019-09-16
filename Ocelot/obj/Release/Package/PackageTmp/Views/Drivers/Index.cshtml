@@ -1,0 +1,485 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles{
+
+    <link href="~/Content/jquery-ui.min.css" rel="stylesheet" />
+    <link href="~/Content/select2.css" rel="stylesheet" />
+    <link href="~/Content/DataTables/css/jquery.dataTables.css" rel="stylesheet" />
+    <link href="~/Content/css/bootstrap-datepicker3.min.css" rel="stylesheet" />
+    <link href="~/Content/sweetalert/sweetalert.css" rel="stylesheet" />
+    <style>
+        .datepicker {
+            background-color: #ffffff;
+            color: grey;
+        }
+    </style>
+}
+@section Scripts{
+    <script src="~/Content/jquery-ui.js"></script>
+    <script src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script src="~/Content/js/plugins/datepicker/bootstrap-datepicker.min.js"></script>
+    <script src="~/Content/js/plugins/icheck/icheck.min.js"></script>
+    <script src="~/Content/js/plugins/inputmask/jquery.inputmask.bundle.min.js"></script>
+
+    <script src="~/Content/select2.js"></script>
+    <script src="~/Content/sweetalert/sweetalert.min.js"></script>
+    <script src="~/Scripts/Common.js"></script>
+    <script>
+        var driversArr = []; var vehiclesArr = [];
+        $('.select2').select2();
+        populateShopsDropDown();
+        populateDrivers();
+        function getDrivers() {
+            $.ajax({
+                url: '/Drivers/GetDriverList',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    console.log(res);
+                    driversArr = res;
+                }
+            });
+            return driversArr;
+        }
+        function getVehicles() {
+            $.ajax({
+                url: '/Vehicle/GetVehicleDropDownList',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+
+                    vehiclesArr = res;
+                }
+            });
+            return vehiclesArr;
+        }
+        function populateDrivers() {
+            $('#driverstable').DataTable({
+                data: getDrivers(),
+                destroy: true,
+                "autoWidth": false,
+                order: false,
+                columns: [
+                    {
+                        title: "Actions", data: null, render: function (data, type) {
+                            if (type === 'display') {
+                                return '<center><div class="dropdown">'
+                                    + '<a  style="width:80%;" class="fa fa-list btn btn-Ocelot dropdown-toggle" data-toggle="dropdown" ">'
+                                    + '<span class="caret"></span></a>'
+                                    + '<ul class="dropdown-menu">'
+                                    + '<li><a onclick="editDriver(\'' + data.ID + '\')">EDIT</a></li>'
+                                    + '<li><a onclick="assignToShop(\'' + data.ID + '\')">ASSIGN SHOP</a></li>'
+                                    + '<li><a onclick="assignBike(\'' + data.ID + '\')">ASSIGN BIKE</a></li>'
+                                    + '</ul>'
+                                    + '</div></center>';
+                            }
+                            return data;
+                        },
+                        className: "dt-body-center"
+                    },
+                    { title: "Driver Name", data: "DriverName" },
+                    { title: "Phone Number", data: "PhoneNumber" },
+                    { title: "Shop Name", data: "ShopName" },
+                    { title: "Vehicle Registaration", data: "VehicleRegistration" }
+
+                ]
+            });
+        }
+        var postObj;
+        var url;
+        function assignBike(id) {
+            jQuery.grep(driversArr, function (n, i) {
+                if (n.ID === id) {
+                    $('#driverId').val(id);
+                    $('#driverName').val(n.DriverName);
+                }
+            });
+            populateVehicleDropDown();
+            $('#assignModal').modal('show');
+        }
+        function assignToShop(id) {
+            jQuery.grep(driversArr, function (n, i) {
+                if (n.ID === id) {
+                    $('#aDriverId').val(id);
+                    $('#aDriverName').val(n.DriverName);
+                }
+            });
+            $('#assignToShopModal').modal('show');
+        }
+        $('#submitAssign').on('click', function () {
+            if (validatingUsingClass('assignForm') === 0) {
+                url = '/Drivers/AssignBike';
+                postObj = {
+                    "DriverID": $('#driverId').val(),
+                    "VehicleID": $('#vehicledropdown option:selected').val()
+                };
+                customPost("Proceed to assign bike?", url, postObj, "assignModal", "assignForm", "ASSIGN DRIVER", populateDrivers);
+            }
+        });
+        $('#addDriver').on('click', function () {
+            $('#addDriverModal').modal('show');
+        });
+        $('#submitAddDriver').on('click', function () {
+            if (validatingUsingClass('addDriverForm') === 0) {
+                url = '/Drivers/AddNewDriver';
+                postObj = {
+                    "FirstName": $('#firstName').val(),
+                    "MiddleName": $('#middleName').val(),
+                    "LastName": $('#lastName').val(),
+                    "PhoneNumber": $('#phoneNumber').val(),
+                    "Email": $('#email').val()
+                };
+                customPost("Proceed to add driver?", url, postObj, "addDriverModal", "addDriverForm", "ADD DRIVER", populateDrivers);
+            }
+        });
+        function editDriver(id) {
+            jQuery.grep(driversArr, function (n, i) {
+                var names = n.DriverName.split(" ");
+                if (n.ID === id) {
+                    $('#driverId').val(id);
+                    $('#efirstName').val(names[0]);
+                    $('#emiddleName').val(names[1]);
+                    $('#elastName').val(names[2]);
+                    $('#eemail').val(n.Email);
+                    $('#ephoneNumber').val(n.PhoneNumber);
+                }
+            });
+            $('#editDriverModal').modal('show');
+        }
+        $('#submitEditDriver').on('click', function () {
+            if (validatingUsingClass('editDriverForm') === 0) {
+                url = '/Drivers/UpdateDriver';
+                postObj = {
+                    "FirstName": $('#efirstName').val(),
+                    "MiddleName": $('#emiddleName').val(),
+                    "LastName": $('#elastName').val(),
+                    "PhoneNumber": $('#ephoneNumber').val(),
+                    "Email": $('#eemail').val(),
+                    "ID": $('#driverId').val()
+                };
+                customPost("Proceed to edit driver?", url, postObj, "editDriverModal", "editDriverForm", "ADD DRIVER", populateDrivers);
+            }
+        });
+        var vehicelDropdownArr = [];
+        function populateVehicleDropDown() {
+            vehicelDropdownArr.length = 0;
+            vehicelDropdownArr.push('<option value="">SELECT A VEHICLE</option>');
+            getVehicles().forEach(function (elem) {
+                vehicelDropdownArr.push('<option value=' + elem.id + '>' + elem.vehicleRegistration + '</option>');
+            });
+            $('#vehicledropdown').html(vehicelDropdownArr);
+        }
+        function populateShopsDropDown() {
+            var shopsdropdownarr = [];
+            shopsdropdownarr.push('<option value="">SELECT A SHOP</option>');
+            getShops().forEach(function (elem) {
+                shopsdropdownarr.push('<option value=' + elem.shopID + '>' + elem.shopName + '</option>');
+            });
+            $('#ShopsDropwDown1').html(shopsdropdownarr);
+        }
+        function getShops() {
+            var data;
+            $.ajax({
+                url: '/Shop/GetsShop',
+                type: 'GET',
+                async: false,
+                success: function (res) {
+                    data = res;
+                }
+            });
+            return data;
+        }
+        $('#assignDriverToShop').on('click', function () {
+            if (validatingUsingClass('assignToShopForm') === 0) {
+                url = '/Drivers/AssignToShop';
+                postObj = { "DriverID": $('#aDriverId').val(), "ShopID": $('#ShopsDropwDown1 option:selected').val() };
+                console.log(postObj);
+                customPost("Proceed to assign driver to shop", url, postObj, "assignToShopModal", "assignToShopForm", "ASSIGN DRIVER", populateDrivers);
+            }
+        });
+    </script>
+}
+<!-- Content Header (Page header) -->
+<section class="content-header">
+    <h1>
+        Drivers
+        <small style="color:white"> adds, updates and lists drivers</small>
+    </h1>
+</section>
+
+<!-- main section-->
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box ">
+                <div class="box-header with-border">
+                    Drivers
+                    <a id="addDriver" style="" class="btn btn-Ocelot pull-right">ADD</a>
+                </div>
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-12 ">
+                            <table id="driverstable" class="table table-bordered table-condensed"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Add drivers Modal -->
+    <div id="addDriverModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header btn-Ocelot">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title"><strong>Add Driver</strong></h4>
+                </div>
+                <div class="modal-body">
+                    <form id="addDriverForm">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <label>FIRST NAME:</label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <input id="firstName" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <label>MIDDLE NAME:</label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <input id="middleName" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <label>THIRD NAME:</label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <input id="lastName" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div><br />
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <label>EMAIL:</label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <input id="email" class="form-control  validate-required" />
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="col-md-6">
+                                <div classs="row">
+                                    <div class="col-md-3">
+                                        <label>PHONE NUMBER:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="phoneNumber" onkeyup="validateNumber(this.id)" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </form>
+
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-Ocelot" id="submitAddDriver">Save</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!--Edit driver modal-->
+    <div id="editDriverModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header btn-Ocelot">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title"><strong>Edit Driver</strong></h4>
+                </div>
+                <div class="modal-body">
+                    <form id="editDriverForm">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <label>FIRST NAME:</label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <input type="hidden" id="driverId" />
+                                        <input id="efirstName" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <label>MIDDLE NAME:</label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <input id="emiddleName" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <label>THIRD NAME:</label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <input id="elastName" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div><br />
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <label>EMAIL:</label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <input id="eemail" class="form-control  validate-required" />
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="col-md-6">
+                                <div classs="row">
+                                    <div class="col-md-3">
+                                        <label>PHONE NUMBER:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="ephoneNumber" onkeyup="validateNumber(this.id)" class="form-control validate-required" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </form>
+
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-Ocelot" id="submitEditDriver">Save</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Assign Modal -->
+    <div id="assignModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header btn-Ocelot">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Assign</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="assignForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>DRIVER NAME:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input id="driverName" class="form-control validate-required" readonly />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>VEHICLE:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select id="vehicledropdown" class="form-control validate-required select2" style="width:100%"></select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <a id="submitAssign" class="btn btn-Ocelot">Save</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- assign shop modal -->
+    <div id="assignToShopModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header btn-Ocelot">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">ASSIGN DRIVER TO SHOP</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="assignToShopForm">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="row">
+                                            <div class="col-md-2">
+                                                <label>DRIVER NAME:</label>
+                                            </div>
+                                            <div class="col-md-10">
+                                                <input id="aDriverId" hidden />
+                                                <input id="aDriverName" class="form-control validate-required" readonly />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="row">
+                                            <div class="col-md-2">
+                                                <label>SHOP:</label>
+                                            </div>
+                                            <div class="col-md-10">
+                                                <select id="ShopsDropwDown1" class="form-control validate-required select2" style="width:100%"></select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+                <div class="modal-footer">
+                    <a id="assignDriverToShop" class="btn btn-Ocelot">Save</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</section>

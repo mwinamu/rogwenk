@@ -1,0 +1,208 @@
+﻿
+@{
+    ViewBag.Title = "Terminal Controllers";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12 col-sm-12 col-xs-12">
+        <div class="box box-info">
+            <div class="box-header with-border">
+                <h3 class="box-title">Users</h3>
+
+                <div class="box-tools pull-right">
+                    <button type="button" class="btn btn-box-tool" data-widget="collapse">
+                        <i class="fa fa-minus"></i>
+                    </button>
+                    <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                </div>
+            </div>
+            <div class="box-body">
+                <div class="table-responsive">
+                    <table id="UsersTable"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="AssignRouteModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header text-center">
+                <h4 class="modal-title w-100 font-weight-bold" id="AssignRouteModalTitle"></h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body mx-3">
+                <div class="form-group">
+                    <label>Select Route</label>
+                    <div class="input-group date">
+                        <div class="input-group-addon">
+                            <i class="fa fa-upload"></i>
+                        </div>
+                        <input type="hidden" id="UserID"/>
+                        <select class="form-control select2" style="width: 100%;" id="Terminal"> </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-center">
+                <button class="btn btn-deep-orange" id="btnAssignTerminal">ASSIGN</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles{
+    <link href="~/Content/select2.css" rel="stylesheet" />
+    <link href="~/Content/DataTables/css/jquery.dataTables.css" rel="stylesheet" />
+    <link href="~/Content/css/bootstrap-datepicker3.min.css" rel="stylesheet" />
+    <link href="~/Content/alertifyjs/css/alertify.min.css" rel="stylesheet" />
+}
+@section Scripts{
+    <script src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script src="~/Content/js/plugins/datepicker/bootstrap-datepicker.min.js"></script>
+    <script src="~/Content/js/plugins/icheck/icheck.min.js"></script>
+    <script src="~/Content/js/plugins/inputmask/jquery.inputmask.bundle.min.js"></script>
+    <script src="~/Content/select2.js"></script>
+    <script src="~/Content/alertifyjs/alertify.min.js"></script>
+    <script>
+        var Users
+        $(document).ready(function () {
+            LoadUsers();
+            //$('#PlannedDate').datepicker({
+            //    setDate: new Date(),
+            //    format: 'dd-MM-yyyy',
+            //    autoclose: true
+            //}).datepicker("setDate", 'now');
+        });
+        
+        function GetUsers() {
+
+            $.ajax({
+                type: 'GET',
+                url: '/User/TermicalControllers',
+                async: false,
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    console.log(data);
+                    Users = data;
+                },
+                error: function (data) {
+                    console.log('Error: ' + data.responseText);
+                }
+            });
+            return Users;
+        }
+
+        //
+        function GetStorageLocations() {
+            var Terminal = $("#Terminal").select2().empty();
+            //var FromTerminal = $("#FromTerminal").select2().empty();
+            $.ajax({
+                type: "GET",
+                url: "/StorageLocation/GetStorageLocations",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+                    $.each(response, function () {
+                        Terminal.append($("<option></option>").val(this['id']).html(this['StorageLocationName']));
+                        //FromTerminal.append($("<option></option>").val(this['id']).html(this['StorageLocationName']));
+                    });
+                },
+                failure: function (response) {
+
+                },
+                error: function (response) {
+
+                }
+            });
+
+        }
+        $('#btnAssignTerminal').click(function () {
+                var UserID = $('#UserID').val();
+                var Terminal = $("#Terminal option:selected").val();
+
+                var AssObj = {
+                    UserID: UserID,
+                    TerminalID: Terminal
+                };
+                $.ajax({
+                    url: "/User/AssignTerminal",
+                    data: JSON.stringify(AssObj),
+                    type: "POST",
+                    contentType: "application/json;charset=utf-8",
+                    dataType: "json",
+                    success: function (result) {
+                        alertify.alert(result.responseText, function () { alertify.message('OK'); });
+                    },
+                    error: function (errormessage) {
+                        alertify.alert(errormessage.responseText, function () { alertify.message('error'); });
+                    }
+                });
+
+        });
+
+        function AssignTerminal(UserID) {
+            var CCName;
+            jQuery.grep(Users, function (n, i) {
+                if (n.UserID === UserID) {
+                    CCName = n.FirstName + ' ' + n.MiddleName + ' ' + n.LastName;
+                    $('#UserID').val(UserID);
+                }
+            });
+            
+            $('#AssignRouteModalTitle').html("ASSIGN ROUTE "+CCName);
+            $('#AssignRouteModal').modal('show');
+            GetStorageLocations();
+        }
+        function LoadUsers() {
+            table = $('#UsersTable').DataTable({
+                destroy: true,
+                "autoWidth": false,
+                order: false,
+                data: GetUsers(),
+                dom: 'Bfrtip',
+                buttons: [
+                    'excel', 'pdf'
+                ],
+                columns: [
+                    {
+                        title: "Actions", data: null, render: function (data, type, row) {
+                            if (type === 'display') {
+                                return '<div class="dropdown ">'
+                                    + '<button class="fa fa-list btn btn-primary dropdown-toggle " type="button" data-toggle="dropdown" ">'
+                                    + '<span class="caret"></span></button>'
+                                    + '<ul class="dropdown-menu">'
+                                    + '<li><a onclick="Edit(\'' + data.UserID + '\')">EDIT</a></li>'
+                                    + '<li><a onclick="AssignTerminal(\'' + data.UserID + '\')">ASSIGN CONTAINER</a></li>'
+                                    + '<li><a onclick="DisableAccount(\'' + data.DriverID + '\')">DEACTIVATE</a></li>'
+                                    + '</ul>'
+                                    + '</div>';
+                            }
+                            return data;
+                        },
+                        className: "dt-body-center"
+                    },
+                    { title: "UserID", data: "UserID" },
+                    { title: "Payroll Number", data: "PayrollNumber" },
+                    { title: "First Name", data: "FirstName" },
+                    { title: "Middle Name", data: "MiddleName" },
+                    { title: "Last Name", data: "LastName" },
+                    { title: "Email", data: "Email" },
+                    { title: "Phone Number", data: "PhoneNumber" },
+                    {
+                        title: "Date Added", data: null, render: function (data, type, row) {
+                            var dt = data.DateAdded;
+                            var _dateInt = new Date(parseInt(dt.substr(6)));
+                            var _date = _dateInt.toLocaleString();
+                            return _date;
+                        }
+                    },
+                ]
+            });
+        }
+    </script>
+}

@@ -1,0 +1,30 @@
+﻿@using System.Web.Optimization
+@using WebHelpers.Mvc5.Enum
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>
+        @if (!string.IsNullOrWhiteSpace(ViewBag.Title))
+        {
+            @ViewBag.Title@: -
+        }
+        AdminLTE
+    </title>
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    @Styles.Render("~/Bundles/css")
+</head>
+<body @*background="~/Images/progas.jpg"*@ style="background-color: #F36B2C">
+    <div class="">
+        <section class="content " >
+            @RenderBody()
+        </section>
+        <script src="@RouteJs.RouteJsHandler.HandlerUrl"></script>
+        <script src="@EnumHandler.HandlerUrl"></script>
+        @Scripts.Render("~/Bundles/js")
+        @RenderSection("ViewSpecificJavascript", required: false)
+    </div>
+   
+</body>
+</html>
